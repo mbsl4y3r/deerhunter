@@ -32,3 +32,6 @@ step, no runtime dependencies. See README.md for gameplay and structure.
   documents sprite names); art must never affect hitboxes.
 - All tuning lives in js/data.js. Gameplay randomness only through DH.G.rng
   (seeded via ?seed=N); visual-only jitter uses DH.G.vrng.
+- Prompt deliverables for the user: ALWAYS complete self-contained code
+  blocks — never "reuse the earlier prompt with X swapped" (user is on a
+  phone and cannot easily edit text).
