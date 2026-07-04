@@ -38,11 +38,11 @@ const SHEETS = [
   { file: 'deer_buck_graze_sheet.png', cells: 1, take: [0],
     names: ['deer_buck_graze'],
     box: { w: 176, h: 171 }, fill: 0.92, fit: 'w' },
-  // death poses overlap the even grid, so frames get explicit x-ranges plus
-  // `clears` (cell-local rects) that erase the neighbor's spill-over pixels
+  // death poses sit close to the even grid, so frames get explicit x-ranges
+  // plus `clears` (cell-local rects) erasing the neighbor's spill-over pixels
   { file: 'deer_buck_death_sheet.png',
-    boxes: [{ x0: 10, x1: 340 }, { x0: 340, x1: 735 }, { x0: 600, x1: 1024 }],
-    clears: { 1: [[255, 425, 78, 105]], 2: [[62, 450, 84, 100]] },
+    boxes: [{ x0: 5, x1: 340 }, { x0: 345, x1: 700 }, { x0: 660, x1: 1024 }],
+    clears: { 1: [[310, 345, 80, 70]], 2: [[0, 125, 48, 175]] },
     names: ['deer_buck_death_0', 'deer_buck_death_1', 'deer_buck_death_2'],
     box: { w: 176, h: 171 }, fill: 0.95, fit: 'h' },
 ];
@@ -123,9 +123,29 @@ for (const S of SHEETS) {
           d[i] = Math.round(r - (r - gr) * Math.min(1, k * 1.6));
           d[i + 2] = Math.round(b - (b - gr) * Math.min(1, k * 1.6));
         }
-        // erase the drawn ground/baseline rule: long light-gray strokes
+        // erase light-gray baseline strokes
         const mx = Math.max(r, gr, b), mn = Math.min(r, gr, b);
-        if (mx - mn < 32 && mx > 110 && mx < 240) d[i + 3] = 0;
+        if (mx - mn < 32 && mx > 110 && mx < 240) { d[i + 3] = 0; continue; }
+        // neutralize magenta ambient cast (rosy antlers): pull pink toward tan
+        if (d[i + 3] > 0 && r > gr + 20 && b >= gr) {
+          d[i + 2] = Math.round(gr + (b - gr) * 0.25);
+          d[i] = Math.round(r - (r - gr) * 0.2);
+        }
+      }
+      // a drawn baseline rule is a thin row where near-black spans most of
+      // the cell — clear those pixels row-wise (hoof blobs never span that)
+      for (let y = 0; y < ch; y++) {
+        let dark = 0;
+        for (let x = 0; x < cw; x++) {
+          const j = (y * cw + x) * 4;
+          if (d[j + 3] > 20 && Math.max(d[j], d[j + 1], d[j + 2]) < 75) dark++;
+        }
+        if (dark > cw * 0.3) {
+          for (let x = 0; x < cw; x++) {
+            const j = (y * cw + x) * 4;
+            if (d[j + 3] > 20 && Math.max(d[j], d[j + 1], d[j + 2]) < 75) d[j + 3] = 0;
+          }
+        }
       }
       g.putImageData(id, 0, 0);
       let x0 = cw, x1 = 0, y0 = ch, y1 = 0;
