@@ -94,20 +94,19 @@ for (const S of SHEETS) {
   const frames = await page.evaluate(async ([src, cfg]) => {
     const img = new Image();
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = src; });
-    const ch = img.naturalHeight;
     const ranges = cfg.boxes
-      ? cfg.boxes.map((b) => [b.x0, b.x1 - b.x0])
+      ? cfg.boxes.map((b) => [b.x0, b.x1 - b.x0, b.y0 || 0, (b.y1 || img.naturalHeight) - (b.y0 || 0)])
       : cfg.take.map((idx) => {
           const cw = Math.floor(img.naturalWidth / cfg.cells);
-          return [idx * cw, cw];
+          return [idx * cw, cw, 0, img.naturalHeight];
         });
 
     // key + clean each selected cell, collect bboxes
-    const cells = ranges.map(([sx, cw], fi) => {
+    const cells = ranges.map(([sx, cw, sy, ch], fi) => {
       const c = document.createElement('canvas');
       c.width = cw; c.height = ch;
       const g = c.getContext('2d');
-      g.drawImage(img, sx, 0, cw, ch, 0, 0, cw, ch);
+      g.drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch);
       for (const [rx, ry, rw, rh] of (cfg.clears && cfg.clears[fi]) || []) {
         g.clearRect(rx, ry, rw, rh);
       }
@@ -125,7 +124,7 @@ for (const S of SHEETS) {
         }
         // erase light-gray baseline strokes
         const mx = Math.max(r, gr, b), mn = Math.min(r, gr, b);
-        if (mx - mn < 32 && mx > 110 && mx < 240) { d[i + 3] = 0; continue; }
+        if (cfg.lineErase !== false && mx - mn < 32 && mx > 110 && mx < 240) { d[i + 3] = 0; continue; }
         // neutralize magenta ambient cast (rosy antlers): pull pink toward tan
         if (d[i + 3] > 0 && r > gr + 20 && b >= gr) {
           d[i + 2] = Math.round(gr + (b - gr) * 0.25);
@@ -134,7 +133,7 @@ for (const S of SHEETS) {
       }
       // a drawn baseline rule is a thin row where near-black spans most of
       // the cell — clear those pixels row-wise (hoof blobs never span that)
-      for (let y = 0; y < ch; y++) {
+      for (let y = 0; cfg.lineErase !== false && y < ch; y++) {
         let dark = 0;
         for (let x = 0; x < cw; x++) {
           const j = (y * cw + x) * 4;
@@ -145,6 +144,28 @@ for (const S of SHEETS) {
             const j = (y * cw + x) * 4;
             if (d[j + 3] > 20 && Math.max(d[j], d[j + 1], d[j + 2]) < 75) d[j + 3] = 0;
           }
+        }
+      }
+      // despeckle: drop connected components under 200px (stray slivers of
+      // neighboring poses that crossed the cut column)
+      {
+        const seen = new Uint8Array(cw * ch);
+        const stack = [];
+        for (let p0 = 0; p0 < cw * ch; p0++) {
+          if (seen[p0] || d[p0 * 4 + 3] <= 20) continue;
+          const comp = [];
+          stack.push(p0); seen[p0] = 1;
+          while (stack.length) {
+            const q = stack.pop();
+            comp.push(q);
+            const qx = q % cw, qy = (q / cw) | 0;
+            for (const [nx, ny] of [[qx - 1, qy], [qx + 1, qy], [qx, qy - 1], [qx, qy + 1]]) {
+              if (nx < 0 || ny < 0 || nx >= cw || ny >= ch) continue;
+              const n = ny * cw + nx;
+              if (!seen[n] && d[n * 4 + 3] > 20) { seen[n] = 1; stack.push(n); }
+            }
+          }
+          if (comp.length < 200) for (const q of comp) d[q * 4 + 3] = 0;
         }
       }
       g.putImageData(id, 0, 0);
