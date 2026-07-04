@@ -166,7 +166,7 @@ DH.screens = (() => {
         ctx.translate(c.x + 10, c.y + 10);
         ctx.scale((c.w - 20) / 960, 150 / 540);
         previews[i].render(ctx, 0, selT);
-        DH.assets.draw(ctx, `${tk.species}_buck_graze`, 500, 470, {
+        DH.assets.draw(ctx, `${tk.species}_buck_walk_0`, 500, 470, {
           scale: DH.data.species[tk.species].bodyScale * 1.1, dir: -1, trophy: 4,
         });
         previews[i].renderFront(ctx, 0);

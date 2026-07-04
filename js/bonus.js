@@ -101,7 +101,7 @@ DH.bonus = (() => {
       DH.entities.drawParticles(ctx);
       bg.renderFront(ctx, DH.G.camX);
       DH.shooting.drawFlash(ctx);
-      DH.hud.draw(ctx, {});
+      DH.hud.draw(ctx, { shells: true });
       DH.hud.label(ctx, `BONUS — ${DH.data.bonus.name}`, 480, 30, 18, '#ffd94d', 'center');
       DH.hud.label(ctx, `DUCKS ${stats.hits}/${stats.total}`, 480, 52, 14, '#e8f0e8', 'center');
       if (introT > 0) {

@@ -33,6 +33,7 @@ DH.hud = (() => {
     ctx.textBaseline = 'alphabetic';
     if (stroke !== false) {
       ctx.lineWidth = Math.max(3, size * 0.16);
+      ctx.lineJoin = 'round';                 // avoid miter spikes on M/K/W glyphs
       ctx.strokeStyle = 'rgba(15,20,15,0.85)';
       ctx.strokeText(text, x, y);
     }
@@ -81,18 +82,20 @@ DH.hud = (() => {
       });
     }
 
-    // shells
-    for (let i = 0; i < DH.data.shells; i++) {
-      const loaded = i < DH.shooting.shells;
-      ctx.save();
-      ctx.globalAlpha = loaded ? 1 : 0.28;
-      DH.assets.draw(ctx, 'shell', 880 + i * 24, 512, { scale: 1.15 });
-      ctx.restore();
-    }
-    if (DH.shooting.reloading) {
-      label(ctx, 'PUMPING...', 892, 480, 13, '#ffd94d', 'center');
-    } else if (DH.shooting.lowShellT > 2 || DH.shooting.shells === 0) {
-      label(ctx, 'R-CLICK / SPACE = RELOAD', 892, 480, 11, 'rgba(255,255,255,0.85)', 'center');
+    // shells (only on shooting screens)
+    if (o.shells) {
+      for (let i = 0; i < DH.data.shells; i++) {
+        const loaded = i < DH.shooting.shells;
+        ctx.save();
+        ctx.globalAlpha = loaded ? 1 : 0.28;
+        DH.assets.draw(ctx, 'shell', 880 + i * 24, 512, { scale: 1.15 });
+        ctx.restore();
+      }
+      if (DH.shooting.reloading) {
+        label(ctx, 'PUMPING...', 946, 480, 13, '#ffd94d', 'right');
+      } else if (DH.shooting.lowShellT > 2 || DH.shooting.shells === 0) {
+        label(ctx, 'R-CLICK / SPACE = RELOAD', 946, 480, 11, 'rgba(255,255,255,0.85)', 'right');
+      }
     }
 
     // banner

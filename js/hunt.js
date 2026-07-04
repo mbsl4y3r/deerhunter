@@ -178,6 +178,7 @@ DH.hunt = (() => {
         ctx.fillRect(0, 0, 960, 540);
       }
       DH.hud.draw(ctx, {
+        shells: true,
         trekName: trek.name,
         siteIndex: DH.G.siteIndex,
         siteCount: trek.sites.length,

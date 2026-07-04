@@ -80,7 +80,8 @@ DH.main = (() => {
   function loop(now) {
     const dt = Math.min((now - last) / 1000 || 0, 1 / 20);
     last = now;
-    tick(dt);
+    // in test mode time only advances via __DH.warp so runs are reproducible
+    if (!testMode) tick(dt);
     render();
     requestAnimationFrame(loop);
   }
