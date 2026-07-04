@@ -36,7 +36,8 @@ const LAYERS = [
     patch: { x: 895, y: 440, w: 85, h: 80, fromX: 780 } },
   { name: 'mountain_front',  file: 'mountain_front.png',  key: true,  q: 0.82,
     patch: { x: 900, y: 145, w: 70, h: 70, fromX: 800 },   // post-crop coords
-    cropY0: 300 },   // drop the tall pine tops so the rim stays a rim
+    cropY0: 300,     // drop the tall pine tops so the rim stays a rim
+    fadeTop: 90 },   // feather the crop edge so the rim melts into the grass
 ];
 
 // 3-row × 2-column six-cell grid (for smoother 6-frame walk/run sheets)
@@ -207,6 +208,15 @@ for (const L of LAYERS) {
     if (cfg.key) {
       const id = g.getImageData(0, 0, c.width, c.height);
       const d = id.data;
+      // feather the top rows to transparent (hides hard crop edges)
+      if (cfg.fadeTop) {
+        for (let y = 0; y < cfg.fadeTop; y++) {
+          const a = y / cfg.fadeTop;
+          for (let x = 0; x < c.width; x++) {
+            d[(y * c.width + x) * 4 + 3] = Math.round(d[(y * c.width + x) * 4 + 3] * a * a);
+          }
+        }
+      }
       for (let i = 0; i < d.length; i += 4) {
         const r = d[i], gr = d[i + 1], b = d[i + 2];
         const m = Math.min(r, b) - gr;              // magenta-ness
