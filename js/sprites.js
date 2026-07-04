@@ -246,25 +246,31 @@ DH.sprites = (() => {
       const p = DH.data.species[spKey].p;
       const w = p.bodyLen * 2.1;
       const h = p.shoulderH + p.bodyH + p.neckLen + 55;
-      for (const role of ['buck', 'doe']) {
+      // 'monster' is a sprite skin for trophy-5 bucks (procedurally it's just
+      // a max-antler buck; painted art can give it a dedicated look)
+      for (const role of ['buck', 'doe', 'monster']) {
+        // monsters get a bigger sprite box so the painted rack + body read larger
+        const bw = role === 'monster' ? Math.round(w * 1.15) : w;
+        const bh = role === 'monster' ? Math.round(h * 1.18) : h;
+        const paintRole = role === 'monster' ? 'buck' : role;
         for (let f = 0; f < 4; f++) {
           A.register(`${spKey}_${role}_walk_${f}`, {
-            w, h, draw: (ctx, o) => quadruped(ctx, spKey, { role, gait: 'walk', phase: f / 4, trophy: o.trophy }),
+            w: bw, h: bh, draw: (ctx, o) => quadruped(ctx, spKey, { role: paintRole, gait: 'walk', phase: f / 4, trophy: o.trophy }),
           });
         }
         for (let f = 0; f < 2; f++) {
           A.register(`${spKey}_${role}_run_${f}`, {
-            w, h, draw: (ctx, o) => quadruped(ctx, spKey, { role, gait: 'run', phase: f / 2, trophy: o.trophy }),
+            w: bw, h: bh, draw: (ctx, o) => quadruped(ctx, spKey, { role: paintRole, gait: 'run', phase: f / 2, trophy: o.trophy }),
           });
         }
         A.register(`${spKey}_${role}_graze`, {
-          w, h, draw: (ctx, o) => quadruped(ctx, spKey, { role, gait: 'graze', phase: 0, trophy: o.trophy }),
+          w: bw, h: bh, draw: (ctx, o) => quadruped(ctx, spKey, { role: paintRole, gait: 'graze', phase: 0, trophy: o.trophy }),
         });
         // death collapse frames: procedural fallback is the run pose (the
         // tumble animation); with PNG overrides the collapse plays in place
         for (let f = 0; f < 3; f++) {
           A.register(`${spKey}_${role}_death_${f}`, {
-            w, h, draw: (ctx, o) => quadruped(ctx, spKey, { role, gait: 'run', phase: 0.5, trophy: o.trophy }),
+            w: bw, h: bh, draw: (ctx, o) => quadruped(ctx, spKey, { role: paintRole, gait: 'run', phase: 0.5, trophy: o.trophy }),
           });
         }
       }

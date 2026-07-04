@@ -38,6 +38,13 @@ const SHEETS = [
   { file: 'deer_buck_graze_sheet.png', cells: 1, take: [0],
     names: ['deer_buck_graze'],
     box: { w: 176, h: 171 }, fill: 0.92, fit: 'w' },
+  // death poses overlap the even grid, so frames get explicit x-ranges plus
+  // `clears` (cell-local rects) that erase the neighbor's spill-over pixels
+  { file: 'deer_buck_death_sheet.png',
+    boxes: [{ x0: 10, x1: 340 }, { x0: 340, x1: 735 }, { x0: 600, x1: 1024 }],
+    clears: { 1: [[255, 425, 78, 105]], 2: [[62, 450, 84, 100]] },
+    names: ['deer_buck_death_0', 'deer_buck_death_1', 'deer_buck_death_2'],
+    box: { w: 176, h: 171 }, fill: 0.95, fit: 'h' },
 ];
 
 const browser = await chromium.launch({ headless: true, executablePath: '/opt/pw-browsers/chromium' });
@@ -87,15 +94,23 @@ for (const S of SHEETS) {
   const frames = await page.evaluate(async ([src, cfg]) => {
     const img = new Image();
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = src; });
-    const cw = Math.floor(img.naturalWidth / cfg.cells);
     const ch = img.naturalHeight;
+    const ranges = cfg.boxes
+      ? cfg.boxes.map((b) => [b.x0, b.x1 - b.x0])
+      : cfg.take.map((idx) => {
+          const cw = Math.floor(img.naturalWidth / cfg.cells);
+          return [idx * cw, cw];
+        });
 
     // key + clean each selected cell, collect bboxes
-    const cells = cfg.take.map((idx) => {
+    const cells = ranges.map(([sx, cw], fi) => {
       const c = document.createElement('canvas');
       c.width = cw; c.height = ch;
       const g = c.getContext('2d');
-      g.drawImage(img, idx * cw, 0, cw, ch, 0, 0, cw, ch);
+      g.drawImage(img, sx, 0, cw, ch, 0, 0, cw, ch);
+      for (const [rx, ry, rw, rh] of (cfg.clears && cfg.clears[fi]) || []) {
+        g.clearRect(rx, ry, rw, rh);
+      }
       const id = g.getImageData(0, 0, cw, ch);
       const d = id.data;
       for (let i = 0; i < d.length; i += 4) {

@@ -22,6 +22,10 @@ DH.entities = (() => {
       this.x = cfg.side === 'L' ? -margin : DH.W + margin;
       this.exitMargin = margin;
       this.state = 'cross';           // cross | graze | flee | dying | dead
+      // sprite skin: trophy-5 bucks use the "monster" sheet when its art exists
+      const monster = DH.assets && DH.assets.get(`${this.sp}_monster_walk_0`);
+      this.skin = this.role === 'buck' && this.trophy >= 5 && monster && monster.img
+        ? 'monster' : this.role;
       this.legPhase = DH.util.rand();
       this.stateT = 0;
       this.alpha = 1;
@@ -67,6 +71,15 @@ DH.entities = (() => {
         }
       } else if (this.state === 'graze') {
         if (this.stateT >= this.grazeDur) { this.state = 'cross'; this.stateT = 0; }
+      } else if (this.state === 'dying' && this.rotV === 0 && this.dyVy === 0 && this.dyVx === 0) {
+        // painted collapse: body thumps down between frames 2 and 3
+        if (this.stateT - dt < 0.55 && this.stateT >= 0.55) {
+          spawnDust(this.x, this.lane.y, this.scale);
+        }
+        if (this.stateT > 1.2) {
+          this.alpha = Math.max(0, 1 - (this.stateT - 1.2) / 0.4);
+          if (this.alpha === 0) this.state = 'dead';
+        }
       } else if (this.state === 'dying') {
         this.dyVy += 900 * dt;
         this.x += this.dyVx * dt;
@@ -106,7 +119,7 @@ DH.entities = (() => {
     }
 
     hasDeathFrames() {
-      const def = DH.assets.get(`${this.sp}_${this.role}_death_0`);
+      const def = DH.assets.get(`${this.sp}_${this.skin}_death_0`);
       return !!(def && def.img);
     }
 
@@ -126,9 +139,9 @@ DH.entities = (() => {
 
     frameName() {
       const g = this.gait();
-      if (g === 'graze') return `${this.sp}_${this.role}_graze`;
-      if (g === 'run') return `${this.sp}_${this.role}_run_${Math.floor(this.legPhase * 2) % 2}`;
-      return `${this.sp}_${this.role}_walk_${Math.floor(this.legPhase * 4) % 4}`;
+      if (g === 'graze') return `${this.sp}_${this.skin}_graze`;
+      if (g === 'run') return `${this.sp}_${this.skin}_run_${Math.floor(this.legPhase * 2) % 2}`;
+      return `${this.sp}_${this.skin}_walk_${Math.floor(this.legPhase * 4) % 4}`;
     }
 
     draw(ctx) {
