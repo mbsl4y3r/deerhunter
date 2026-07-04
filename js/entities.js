@@ -300,6 +300,17 @@ DH.entities = (() => {
     }
   }
 
+  function spawnLeaves(x, y) {
+    for (let i = 0; i < 9; i++) {
+      particles.push({
+        type: 'leaf', x: x + (DH.util.rand() - 0.5) * 24, y: y + (DH.util.rand() - 0.5) * 16,
+        vx: (DH.util.rand() - 0.5) * 50, vy: 15 + DH.util.rand() * 45,
+        r: 2.5 + DH.util.rand() * 2.5, t: 0, life: 0.9 + DH.util.rand() * 0.6,
+        hue: DH.util.rand(),
+      });
+    }
+  }
+
   function spawnFeathers(x, y) {
     for (let i = 0; i < 8; i++) {
       particles.push({
@@ -321,6 +332,7 @@ DH.entities = (() => {
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       if (p.type === 'feather') p.vy += 60 * dt;
+      else if (p.type === 'leaf') p.x += Math.sin(p.t * 7 + p.r * 5) * 24 * dt;   // flutter
       else p.vy -= 20 * dt;
     }
     particles = particles.filter((p) => p.t < p.life);
@@ -341,6 +353,16 @@ DH.entities = (() => {
         ctx.fillStyle = p.color || '#ffd94d';
         ctx.fillText(p.text, p.x, p.y - rise);
         ctx.restore();
+      } else if (p.type === 'leaf') {
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, k * 2);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(Math.sin(p.t * 6 + p.r) * 0.9);
+        ctx.fillStyle = p.hue < 0.55 ? '#5d7a42' : p.hue < 0.85 ? '#4a6b3f' : '#c9973a';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, p.r * 1.4, p.r * 0.7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       } else {
         ctx.globalAlpha = k * (p.type === 'dust' ? 0.5 : 0.85);
         ctx.fillStyle = p.type === 'dust' ? '#b8a888' : p.type === 'feather' ? '#e8e4d8' : '#f2f2ee';
@@ -354,6 +376,6 @@ DH.entities = (() => {
 
   function clearParticles() { particles = []; }
 
-  return { Animal, Duck, spawnPuff, spawnDust, spawnFeathers, spawnPopup,
+  return { Animal, Duck, spawnPuff, spawnDust, spawnFeathers, spawnLeaves, spawnPopup,
            updateParticles, drawParticles, clearParticles };
 })();

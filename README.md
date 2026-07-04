@@ -6,7 +6,11 @@ assets: every sprite, background, and sound effect is generated in code.
 
 ## Play
 
-Double-click `index.html` — that's it. Or serve it:
+**▶ https://mbsl4y3r.github.io/deerhunter/** — auto-deployed from this repo.
+On a phone, use landscape; the in-game ⛶ button goes fullscreen, and Safari's
+*Add to Home Screen* installs it as a standalone app.
+
+Or run it locally: double-click `index.html`, or serve it:
 
 ```sh
 python3 -m http.server 8000

@@ -71,7 +71,8 @@ DH.hunt = (() => {
   function impact(x, y) {
     const res = DH.shooting.resolveImpact(x, y, animals.filter((a) => a.alive));
     if (!res) {
-      if (y > 290) DH.entities.spawnDust(x, y, 0.7);   // dirt kick on the ground
+      if (y > 290) DH.entities.spawnDust(x, y, 0.7);        // dirt kick on the ground
+      else if (y > 130) DH.entities.spawnLeaves(x, y);      // rustle the canopy
       return;
     }
     stats.hits++;
@@ -80,15 +81,21 @@ DH.hunt = (() => {
     if (a.role === 'buck') {
       const pts = killPoints(a, res.part, res.mult);
       DH.G.score += pts;
-      stats.cash += DH.shop.earn(pts);
+      const cash = DH.shop.earn(pts);
+      stats.cash += cash;
       stats.kills.push({ species: a.sp, trophy: a.trophy, part: res.part, points: pts,
                          running: a.state === 'flee' || a.behavior === 'run' });
       a.kill();
       DH.audio.play('thud');
       DH.entities.spawnPopup(x, y - 30, '+' + DH.util.fmtScore(pts),
                              res.part === 'head' ? '#ffe97a' : '#ffd94d');
-      if (res.part === 'head') DH.hud.banner('TROPHY SHOT!', '#ffe97a', 1.0);
-      else if (a.trophy >= 5) DH.hud.banner('MONSTER BUCK!', '#ffd94d', 1.0);
+      DH.entities.spawnPopup(x, y + 6, '+$' + DH.util.fmtScore(cash), '#7ac96b');
+      if (a.trophy >= 5) {
+        DH.hud.banner('MONSTER BUCK!', '#ffd94d', 1.2);
+        DH.G.timeScale = 0.3;                       // savor the trophy
+      } else if (res.part === 'head') {
+        DH.hud.banner('TROPHY SHOT!', '#ffe97a', 1.0);
+      }
     } else {
       // shot a doe: penalty, site over
       stats.doeHit = true;
@@ -191,6 +198,18 @@ DH.hunt = (() => {
       DH.entities.drawParticles(ctx);
       bg.renderFront(ctx, DH.G.camX);
       DH.shooting.drawShots(ctx);
+      // the trek marches from dawn to dusk across its five sites
+      const tint = [
+        'rgba(255,170,110,0.10)',      // site 1 — first light
+        null,                          // site 2 — morning
+        null,                          // site 3 — midday
+        'rgba(255,150,60,0.14)',       // site 4 — golden hour
+        'rgba(70,60,140,0.22)',        // site 5 — dusk
+      ][DH.G.siteIndex];
+      if (tint) {
+        ctx.fillStyle = tint;
+        ctx.fillRect(0, 0, DH.W, 540);
+      }
       if (doeFlash > 0) {
         ctx.fillStyle = `rgba(200,30,20,${0.35 * doeFlash})`;
         ctx.fillRect(0, 0, DH.W, 540);

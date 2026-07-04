@@ -33,6 +33,7 @@ DH.main = (() => {
     trekStartScore: 0,
     shake: { t: 0, mag: 0 },
     camX: 0,
+    timeScale: 1,          // trophy-kill slow-mo (live play only; warp ignores it)
     stateName: 'BOOT',
     testMode,
   };
@@ -138,7 +139,10 @@ DH.main = (() => {
     const dt = Math.min((now - last) / 1000 || 0, 1 / 20);
     last = now;
     // in test mode time only advances via __DH.warp so runs are reproducible
-    if (!testMode) tick(dt);
+    if (!testMode) {
+      DH.G.timeScale += (1 - DH.G.timeScale) * Math.min(1, dt * 2.2);
+      tick(dt * DH.G.timeScale);
+    }
     render();
     requestAnimationFrame(loop);
   }
