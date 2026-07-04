@@ -86,10 +86,16 @@ DH.data = (() => {
       },
       doeP: { coat: '#c9b189', coatDark: '#8a6f52', headC: '#7a5c42' },
       antlerStyle: 'branched-tall',
+      // calibrated to the painted elk sprites
       hitboxes: [
-        { part: 'head',   cx: 60, cy: -84, rx: 21, ry: 19 },
-        { part: 'vitals', cx: 18, cy: -58, rx: 22, ry: 19 },
-        { part: 'body',   cx: -6, cy: -55, rx: 50, ry: 26 },
+        { part: 'head',   cx: 66, cy: -104, rx: 22, ry: 20, gx: 62, gy: -40 },
+        { part: 'vitals', cx: 15, cy: -76,  rx: 22, ry: 19 },
+        { part: 'body',   cx: -8, cy: -74,  rx: 52, ry: 27 },
+      ],
+      hitboxesDoe: [
+        { part: 'head',   cx: 52, cy: -90, rx: 18, ry: 16, gx: 56, gy: -32 },
+        { part: 'vitals', cx: 12, cy: -60, rx: 19, ry: 16 },
+        { part: 'body',   cx: -6, cy: -58, rx: 46, ry: 22 },
       ],
     },
     moose: {

@@ -150,6 +150,39 @@ for (const id of ['pump12', 'lever30', 'win94', 'bolt700', 'auto5']) {
     box: { w: 96, h: 36 }, fill: 0.98, fit: 'w', lineErase: false });
 }
 
+// Elk cast. Bull sheets are 2x3 (Q6); the cow's smaller fills keep her body
+// height matched to the bull's (his box height includes the rack).
+const EBOX = { w: 193, h: 183 };
+SHEETS.push(
+  { file: 'elk_bull_walk_sheet.png', boxes: Q6,
+    names: ['elk_buck_walk_0', 'elk_buck_walk_1', 'elk_buck_walk_2', 'elk_buck_walk_3', 'elk_buck_walk_4', 'elk_buck_walk_5'],
+    box: EBOX, fill: 0.95, fit: 'h', lineErase: false },
+  { file: 'elk_bull_run_sheet.png', boxes: Q6,
+    names: ['elk_buck_run_0', 'elk_buck_run_1', 'elk_buck_run_2', 'elk_buck_run_3', 'elk_buck_run_4', 'elk_buck_run_5'],
+    box: EBOX, fill: 0.95, fit: 'h', lineErase: false },
+  // the graze generation glitched into a 2x3 collage — the middle-right
+  // cell is the clean grazing pose
+  { file: 'elk_bull_graze_sheet.png', boxes: [Q6[3]],
+    names: ['elk_buck_graze'],
+    box: EBOX, fill: 0.9, fit: 'w', lineErase: false },
+  // death came back 2x3 with six stages; keep flinch, buckle, collapse, rest
+  { file: 'elk_bull_death_sheet.png', boxes: [Q6[0], Q6[3], Q6[4], Q6[5]],
+    names: ['elk_buck_death_0', 'elk_buck_death_1', 'elk_buck_death_2', 'elk_buck_death_3'],
+    box: EBOX, fill: 0.95, fit: 'h', lineErase: false },
+  { file: 'elk_cow_walk_sheet.png', boxes: Q6,
+    names: ['elk_doe_walk_0', 'elk_doe_walk_1', 'elk_doe_walk_2', 'elk_doe_walk_3', 'elk_doe_walk_4', 'elk_doe_walk_5'],
+    box: EBOX, fill: 0.6, fit: 'h', lineErase: false },
+  { file: 'elk_cow_run_sheet.png', boxes: Q6,
+    names: ['elk_doe_run_0', 'elk_doe_run_1', 'elk_doe_run_2', 'elk_doe_run_3', 'elk_doe_run_4', 'elk_doe_run_5'],
+    box: EBOX, fill: 0.55, fit: 'h', lineErase: false },
+  { file: 'elk_cow_graze.png', cells: 1, take: [0],
+    names: ['elk_doe_graze'],
+    box: EBOX, fill: 0.85, fit: 'w', lineErase: false },
+  { file: 'elk_cow_death_sheet.png', boxes: Q,
+    names: ['elk_doe_death_0', 'elk_doe_death_1', 'elk_doe_death_2', 'elk_doe_death_3'],
+    box: EBOX, fill: 0.6, fit: 'h', lineErase: false },
+);
+
 const browser = await chromium.launch({ headless: true, executablePath: '/opt/pw-browsers/chromium' });
 const page = await browser.newPage();
 
