@@ -59,17 +59,17 @@ DH.data = (() => {
       antlerStyle: 'branched',
       // calibrated to the painted sprites (gx/gy = head position while grazing)
       hitboxes: [
-        { part: 'head',   cx: 40, cy: -114, rx: 16, ry: 15, gx: 58, gy: -34 },
+        { part: 'head',   cx: 40, cy: -114, rx: 22, ry: 20, gx: 58, gy: -34 },
         { part: 'vitals', cx: 18, cy: -84,  rx: 21, ry: 18 },
         { part: 'body',   cx: -8, cy: -82,  rx: 50, ry: 26 },
       ],
       hitboxesDoe: [
-        { part: 'head',   cx: 40, cy: -86, rx: 13, ry: 12, gx: 55, gy: -30 },
+        { part: 'head',   cx: 40, cy: -86, rx: 18, ry: 16, gx: 55, gy: -30 },
         { part: 'vitals', cx: 14, cy: -64, rx: 18, ry: 15 },
         { part: 'body',   cx: -4, cy: -62, rx: 45, ry: 21 },
       ],
       hitboxesMonster: [                  // local units; drawn 1.15× like the sprite
-        { part: 'head',   cx: 52, cy: -103, rx: 15, ry: 14, gx: 60, gy: -36 },
+        { part: 'head',   cx: 52, cy: -103, rx: 21, ry: 19, gx: 60, gy: -36 },
         { part: 'vitals', cx: 16, cy: -74,  rx: 21, ry: 18 },
         { part: 'body',   cx: -6, cy: -72,  rx: 50, ry: 26 },
       ],
@@ -87,7 +87,7 @@ DH.data = (() => {
       doeP: { coat: '#c9b189', coatDark: '#8a6f52', headC: '#7a5c42' },
       antlerStyle: 'branched-tall',
       hitboxes: [
-        { part: 'head',   cx: 60, cy: -84, rx: 16, ry: 14 },
+        { part: 'head',   cx: 60, cy: -84, rx: 21, ry: 19 },
         { part: 'vitals', cx: 18, cy: -58, rx: 22, ry: 19 },
         { part: 'body',   cx: -6, cy: -55, rx: 50, ry: 26 },
       ],
@@ -105,7 +105,7 @@ DH.data = (() => {
       doeP: { coat: '#5d4736', coatDark: '#463527', headC: '#4e3c2e' },
       antlerStyle: 'palmate',
       hitboxes: [
-        { part: 'head',   cx: 62, cy: -88, rx: 18, ry: 15 },
+        { part: 'head',   cx: 62, cy: -88, rx: 23, ry: 20 },
         { part: 'vitals', cx: 20, cy: -64, rx: 24, ry: 21 },
         { part: 'body',   cx: -6, cy: -60, rx: 52, ry: 30 },
       ],
