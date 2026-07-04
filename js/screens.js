@@ -145,7 +145,8 @@ DH.screens = (() => {
       const CX = DH.CX;
       fill(ctx);
       L(ctx, 'CHOOSE YOUR HUNT', CX, 62, 40, '#ffd94d', 'center');
-      L(ctx, `SCORE  ${fmtScore(DH.G.score)}`, CX, 92, 17, '#e8f0e8', 'center');
+      L(ctx, `SCORE  ${fmtScore(DH.G.score)}`, CX - 90, 92, 17, '#e8f0e8', 'center');
+      L(ctx, `CASH  $${fmtScore(DH.shop.cash)}`, CX + 110, 92, 17, '#7ac96b', 'center');
 
       const CS = cards();
       DH.data.treks.forEach((tk, i) => {
@@ -188,11 +189,26 @@ DH.screens = (() => {
         }
         ctx.restore();
       });
-      L(ctx, 'COMPLETE ALL THREE TREKS FOR YOUR FINAL SCORE', CX, 512, 14, '#9ab59a', 'center');
+      // gun shop entrance
+      const sb = shopBtn();
+      DH.util.rr(ctx, sb.x, sb.y, sb.w, sb.h, 10);
+      ctx.fillStyle = '#2c2416';
+      ctx.fill();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#c9a54a';
+      ctx.stroke();
+      L(ctx, '🛒 GUN SHOP', CX, sb.y + 27, 17, '#ffd94d', 'center');
+      L(ctx, 'COMPLETE ALL THREE TREKS FOR YOUR FINAL SCORE', CX, 516, 12, '#9ab59a', 'center');
       DH.hud.drawMute(ctx);
     },
     onClick(x, y) {
       if (DH.hud.muteHit(x, y)) { DH.audio.toggleMute(); return; }
+      const sb = shopBtn();
+      if (x >= sb.x && x <= sb.x + sb.w && y >= sb.y && y <= sb.y + sb.h) {
+        DH.audio.play('ui');
+        DH.setState('SHOP');
+        return;
+      }
       const i = hitCard(x, y);
       if (i != null && DH.G.completed[DH.data.treks[i].id] == null) {
         DH.audio.play('ui');
@@ -204,6 +220,10 @@ DH.screens = (() => {
       }
     },
   };
+
+  function shopBtn() {
+    return { x: DH.CX - 95, y: 468, w: 190, h: 38 };
+  }
 
   function hitCard(x, y) {
     const CS = cards();
@@ -284,6 +304,7 @@ DH.screens = (() => {
       if (rec.accBonus) { L(ctx, 'ACCURACY BONUS', CX - 180, y, 15, '#e8f0e8'); L(ctx, '+' + fmtScore(rec.accBonus), CX + 170, y, 15, '#ffd94d'); y += 28; }
       if (rec.threeBuckBonus) { L(ctx, 'THREE BUCK BONUS', CX - 180, y, 15, '#e8f0e8'); L(ctx, '+' + fmtScore(rec.threeBuckBonus), CX + 170, y, 15, '#ffd94d'); y += 28; }
       if (rec.doeHit) { L(ctx, 'DOE PENALTY', CX - 180, y, 15, '#ff5a4a'); L(ctx, fmtScore(rec.penalty), CX + 170, y, 15, '#ff5a4a'); y += 28; }
+      if (rec.cash) { L(ctx, 'CASH EARNED', CX - 180, y, 15, '#7ac96b'); L(ctx, '+$' + fmtScore(rec.cash), CX + 170, y, 15, '#7ac96b'); y += 28; }
       const siteTotal = rec.kills.reduce((s, k) => s + k.points, 0) + rec.accBonus + rec.threeBuckBonus + rec.penalty;
       L(ctx, 'SITE TOTAL', CX - 180, y + 8, 18, '#f2ead0');
       L(ctx, (siteTotal >= 0 ? '+' : '') + fmtScore(siteTotal), CX + 170, y + 8, 18, siteTotal >= 0 ? '#ffd94d' : '#ff5a4a');

@@ -42,7 +42,7 @@ DH.hunt = (() => {
     const speedMult = a.state === 'flee' || a.behavior === 'run' ? sc.runMult
       : a.behavior === 'trot' ? sc.trotMult : 1;
     const pts = a.def.base * sc.distMult[a.laneIdx] * speedMult * mult *
-      (1 + sc.trophyStep * (a.trophy - 1));
+      (1 + sc.trophyStep * (a.trophy - 1)) * DH.shop.scoreMult();
     return Math.round(pts / 5) * 5;
   }
 
@@ -60,6 +60,7 @@ DH.hunt = (() => {
       threeBuckBonus: stats.kills.length === 3 ? sc.threeBuckBonus : 0,
       doeHit: stats.doeHit,
       penalty: stats.doeHit ? sc.doePenalty : 0,
+      cash: stats.cash,
     };
     DH.G.score += rec.accBonus + rec.threeBuckBonus;
     DH.G.trekRecords.push(rec);
@@ -79,6 +80,7 @@ DH.hunt = (() => {
     if (a.role === 'buck') {
       const pts = killPoints(a, res.part, res.mult);
       DH.G.score += pts;
+      stats.cash += DH.shop.earn(pts);
       stats.kills.push({ species: a.sp, trophy: a.trophy, part: res.part, points: pts,
                          running: a.state === 'flee' || a.behavior === 'run' });
       a.kill();
@@ -111,7 +113,7 @@ DH.hunt = (() => {
       t = 0;
       endT = null;
       doeFlash = 0;
-      stats = { shots: 0, hits: 0, kills: [], doeHit: false };
+      stats = { shots: 0, hits: 0, kills: [], doeHit: false, cash: 0 };
       DH.shooting.reset();
       DH.entities.clearParticles();
       DH.audio.startAmbient(trek.env);

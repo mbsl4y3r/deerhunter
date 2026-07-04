@@ -84,11 +84,13 @@ DH.hud = (() => {
 
     // shells + reload button (only on shooting screens)
     if (o.shells) {
-      for (let i = 0; i < DH.data.shells; i++) {
+      const cap = DH.shop.capacity();
+      const icon = DH.shop.ammo() === 'rifle' ? 'cartridge' : 'shell';
+      for (let i = 0; i < cap; i++) {
         const loaded = i < DH.shooting.shells;
         ctx.save();
         ctx.globalAlpha = loaded ? 1 : 0.28;
-        DH.assets.draw(ctx, 'shell', DH.HUDR - 80 + i * 24, 512, { scale: 1.15 });
+        DH.assets.draw(ctx, icon, DH.HUDR - 8 - (cap - i) * 24, 512, { scale: 1.15 });
         ctx.restore();
       }
       drawReloadButton(ctx);
@@ -121,7 +123,7 @@ DH.hud = (() => {
   function drawReloadButton(ctx) {
     const r = reloadRect();
     const reloading = DH.shooting.reloading;
-    const full = DH.shooting.shells >= DH.data.shells;
+    const full = DH.shooting.shells >= DH.shop.capacity();
     const urgent = DH.shooting.shells === 0 && !reloading;
     ctx.save();
     ctx.globalAlpha = full && !reloading ? 0.45 : 0.92;

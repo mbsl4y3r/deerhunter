@@ -255,7 +255,37 @@ async function main() {
     await p.close();
   }
 
-  // 7 — determinism: same seed ⇒ identical world
+  // 7 — gun shop: open, buy, equip, capacity applies, persists
+  {
+    const p = await newPage(HTTP);
+    await p.evaluate(() => window.DH.shop._reset());
+    await D(p, 'click', 480, 300);
+    await D(p, 'click', 480, 487);                       // GUN SHOP button
+    ok('shop opens from trek select', (await D(p, 'state')) === 'SHOP');
+    const r = await p.evaluate(() => {
+      window.DH.shop.earn(100000);                       // $20,000
+      return {
+        bought: window.DH.shop.buy('lever30'),
+        upg: window.DH.shop.buyUpgrade('slick'),
+        equipped: window.DH.shop.equipped,
+        cash: window.DH.shop.cash,
+      };
+    });
+    ok('buys gun + upgrade with kill cash', r.bought && r.upg && r.equipped === 'lever30',
+       JSON.stringify(r));
+    await D(p, 'skipToState', 'TREK_SELECT');
+    await D(p, 'click', 176, 290);
+    await D(p, 'warp', 2);
+    ok('lever rifle hunts with 4 rounds', (await D(p, 'shells')) === 4);
+    await p.reload();
+    await p.waitForFunction(() => window.__DH && window.__DH.state() === 'TITLE');
+    ok('shop purchases persist across reload',
+       (await p.evaluate(() => window.DH.shop.equipped)) === 'lever30');
+    await p.evaluate(() => window.DH.shop._reset());
+    await p.close();
+  }
+
+  // 8 — determinism: same seed ⇒ identical world
   {
     const snap = async () => {
       const p = await newPage(HTTP);

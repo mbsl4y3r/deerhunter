@@ -18,6 +18,7 @@ DH.bonus = (() => {
     stats.hits++;
     stats.points += pts;
     DH.G.score += pts;
+    DH.shop.earn(pts);
     res.hit.kill();
     DH.entities.spawnFeathers(x, y);
     DH.entities.spawnPopup(x, y - 24, '+' + pts, '#ffd94d');

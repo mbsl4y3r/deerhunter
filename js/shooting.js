@@ -5,7 +5,7 @@ window.DH = window.DH || {};
 // point, so moving targets must be led — hits resolve at impact time.
 DH.shooting = (() => {
   const S = {
-    shells: DH.data.shells,
+    shells: 3,
     reloading: false,
     reloadT: 0,
     cooldown: 0,
@@ -18,11 +18,11 @@ DH.shooting = (() => {
 
   function flightTime(x, y) {
     const g = gun();
-    return Math.hypot(x - g.x, y - g.y) / DH.data.bulletSpeed;
+    return Math.hypot(x - g.x, y - g.y) / DH.shop.bulletSpeed();
   }
 
   function reset() {
-    S.shells = DH.data.shells;
+    S.shells = DH.shop.capacity();
     S.reloading = false;
     S.reloadT = 0;
     S.cooldown = 0;
@@ -37,7 +37,7 @@ DH.shooting = (() => {
       S.reloadT -= dt;
       if (S.reloadT <= 0) {
         S.reloading = false;
-        S.shells = DH.data.shells;
+        S.shells = DH.shop.capacity();
       }
     }
     if (S.flash) {
@@ -49,13 +49,13 @@ DH.shooting = (() => {
       if (b.t >= b.dur) b.onImpact(b.tx, b.ty);
     }
     S.bullets = S.bullets.filter((b) => b.t < b.dur);
-    S.lowShellT = S.shells < DH.data.shells && !S.reloading ? S.lowShellT + dt : 0;
+    S.lowShellT = S.shells < DH.shop.capacity() && !S.reloading ? S.lowShellT + dt : 0;
   }
 
   function reload() {
-    if (S.reloading || S.shells >= DH.data.shells) return false;
+    if (S.reloading || S.shells >= DH.shop.capacity()) return false;
     S.reloading = true;
-    S.reloadT = DH.data.reloadTime;
+    S.reloadT = DH.shop.reloadTime();
     DH.audio.play('pump');
     return true;
   }
@@ -70,7 +70,7 @@ DH.shooting = (() => {
       return { fired: false, empty: true };
     }
     S.shells--;
-    S.cooldown = DH.data.fireCooldown;
+    S.cooldown = DH.shop.cooldown();
     S.flash = { t: 0 };
     const g = gun();
     S.bullets.push({ x0: g.x, y0: g.y - 14, tx: x, ty: y, t: 0,

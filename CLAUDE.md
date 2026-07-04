@@ -10,8 +10,8 @@ step, no runtime dependencies. See README.md for gameplay and structure.
   user can test on their phone. Artifact URL (keep redeploying to this one):
   https://claude.ai/code/artifact/265e280f-47e6-484e-b49b-ddfba839dab7
   Bundle = `<title>` + viewport metas + `<style>` + `<canvas>` + rotate div +
-  the 16 `js/*.js` files (incl. generated artdata.js) inlined as script tags
-  in index.html order.
+  all `js/*.js` files (incl. generated artdata.js) inlined as script tags in
+  index.html order.
 - Painted art pipeline: drop Nano Banana output into `art/src/` and run
   `node art/process.mjs` (chroma-keys magenta, patches watermarks, slices
   spritesheets to the registry boxes, writes js/artdata.js). Layer placement

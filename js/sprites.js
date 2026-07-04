@@ -224,6 +224,27 @@ DH.sprites = (() => {
     ell(ctx, 0, 3, 2.2, 2.2, '#8a6a20');
   }
 
+  function cartridgeIcon(ctx) {
+    // brass case
+    DH.util.rr(ctx, -4, -6, 8, 17, 1.5);
+    ctx.fillStyle = '#c9a54a';
+    ctx.fill();
+    // rim
+    ctx.fillStyle = '#a8853a';
+    ctx.fillRect(-5, 9, 10, 3);
+    // copper bullet
+    ctx.fillStyle = '#b06a3a';
+    ctx.beginPath();
+    ctx.moveTo(-4, -6);
+    ctx.quadraticCurveTo(-4, -13, 0, -14);
+    ctx.quadraticCurveTo(4, -13, 4, -6);
+    ctx.closePath();
+    ctx.fill();
+    // shine
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillRect(-2.5, -4, 1.6, 12);
+  }
+
   function muzzleFlash(ctx, o) {
     const big = o.frame === 0;
     const r = big ? 26 : 15;
@@ -281,6 +302,7 @@ DH.sprites = (() => {
     }
     A.register('crosshair', { w: 48, h: 48, anchorY: 0.5, draw: crosshair });
     A.register('shell', { w: 12, h: 24, anchorY: 0.5, draw: shellIcon });
+    A.register('cartridge', { w: 10, h: 26, anchorY: 0.5, draw: cartridgeIcon });
   }
 
   return { registerAll, quadruped, shade };

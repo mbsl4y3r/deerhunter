@@ -21,6 +21,27 @@ DH.data = (() => {
   const fireCooldown = 0.12;
   const bulletSpeed = 1350;   // logical px/s — shots take time, lead your target
 
+  // Gun shop. Cash = kill points / 5, wallet persists across games.
+  // Names are affectionate near-misses of the real things.
+  const guns = [
+    { id: 'pump12',  name: 'PUMPHOUSE 12',   desc: 'Trusty pump-action 12 gauge', style: 'pump',
+      price: 0,     shells: 3, reload: 0.45, cooldown: 0.12, bullet: 1350, ammo: 'shell' },
+    { id: 'lever30', name: 'MARLTON .30-30', desc: 'Lever-action brush rifle', style: 'lever',
+      price: 8000,  shells: 4, reload: 0.50, cooldown: 0.13, bullet: 1750, ammo: 'rifle' },
+    { id: 'win94',   name: "WINFIELD '94",   desc: 'The classic deer carbine', style: 'lever',
+      price: 20000, shells: 5, reload: 0.50, cooldown: 0.12, bullet: 2000, ammo: 'rifle' },
+    { id: 'bolt700', name: 'BOLTZMANN 700',  desc: 'Precision bolt gun · +15% score', style: 'bolt',
+      price: 45000, shells: 3, reload: 0.65, cooldown: 0.30, bullet: 2650, ammo: 'rifle', scoreMult: 1.15 },
+    { id: 'auto5',   name: 'AUTOMAG FIVE',   desc: 'Semi-auto speed demon', style: 'auto',
+      price: 70000, shells: 5, reload: 0.55, cooldown: 0.07, bullet: 1600, ammo: 'shell' },
+  ];
+  const upgrades = [
+    { id: 'slick',   name: 'SLICK ACTION',  desc: '35% faster reload',    price: 6000 },
+    { id: 'barrel',  name: 'LONG BARREL',   desc: '25% faster bullets',   price: 9000 },
+    { id: 'trigger', name: 'TRIGGER JOB',   desc: '40% faster follow-up', price: 12000 },
+    { id: 'mag',     name: 'MAG EXTENSION', desc: '+1 round capacity',    price: 18000 },
+  ];
+
   // Painter proportions are in animal-local units: origin at the ground
   // under the body center, +x = facing direction. Hitboxes share the space.
   const species = {
@@ -237,5 +258,6 @@ DH.data = (() => {
     ],
   };
 
-  return { scoring, shells, reloadTime, fireCooldown, bulletSpeed, species, LANES, treks, bonus };
+  return { scoring, shells, reloadTime, fireCooldown, bulletSpeed, guns, upgrades,
+           species, LANES, treks, bonus };
 })();

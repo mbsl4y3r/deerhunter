@@ -70,6 +70,24 @@ SHEETS.push(
     box: MBOX, fill: 0.95, fit: 'h', lineErase: false },
 );
 
+// Doe sheets: no antlers, so the body would fill the whole box at the buck's
+// fill factor — smaller fills keep her body height matched to the buck's.
+const DBOX = { w: 176, h: 171 };
+SHEETS.push(
+  { file: 'deer_doe_walk_sheet.png', boxes: Q,
+    names: ['deer_doe_walk_0', 'deer_doe_walk_1', 'deer_doe_walk_2', 'deer_doe_walk_3'],
+    box: DBOX, fill: 0.62, fit: 'h', lineErase: false },
+  { file: 'deer_doe_run_sheet.png', boxes: [Q[1], Q[3]],
+    names: ['deer_doe_run_0', 'deer_doe_run_1'],
+    box: DBOX, fill: 0.55, fit: 'h', lineErase: false },
+  { file: 'deer_doe_graze_sheet.png', boxes: [{ x0: 0, x1: 1024, y0: 0, y1: 1024 }],
+    names: ['deer_doe_graze'],
+    box: DBOX, fill: 0.88, fit: 'w', lineErase: false },
+  { file: 'deer_doe_death_sheet.png', boxes: Q,
+    names: ['deer_doe_death_0', 'deer_doe_death_1', 'deer_doe_death_2', 'deer_doe_death_3'],
+    box: DBOX, fill: 0.62, fit: 'h', lineErase: false },
+);
+
 const browser = await chromium.launch({ headless: true, executablePath: '/opt/pw-browsers/chromium' });
 const page = await browser.newPage();
 
