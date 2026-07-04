@@ -227,7 +227,13 @@ DH.entities = (() => {
         this.y += (this.stateT * 780) * dt;
         this.x += this.dir * 26 * dt;
         this.rot += this.dir * 7 * dt;
-        if (this.y > 400) { this.state = 'dead'; spawnDust(this.x, this.y, 0.7); }
+        if (this.y >= 424) {
+          // thump into the grass (above the foreground brush) and stay
+          // there for the rest of the round
+          this.y = 424;
+          this.state = 'downed';
+          spawnDust(this.x, this.y + 6, 0.8);
+        }
       }
     }
 
@@ -239,6 +245,10 @@ DH.entities = (() => {
         const four = DH.assets.get('duck_2') && DH.assets.get('duck_2').img;
         const name = `duck_${Math.floor(this.flap) % (four ? 4 : 2)}`;
         DH.assets.draw(ctx, name, this.x, this.y, { dir: this.dir });
+      } else if (this.state === 'downed') {
+        const dead = DH.assets.get('duck_dead');
+        if (dead && dead.img) DH.assets.draw(ctx, 'duck_dead', this.x, this.y, { dir: this.dir });
+        else DH.assets.draw(ctx, 'duck_1', this.x, this.y, { dir: this.dir, rot: Math.PI });
       } else {
         const fall = DH.assets.get('duck_fall');
         if (fall && fall.img) {

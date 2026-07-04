@@ -121,6 +121,10 @@ DH.hunt = (() => {
 
     exit() { DH.audio.stopAmbient(); },
 
+    onResize() {
+      if (trek) bg = DH.background.build(trek.env, DH.G.seed + DH.G.trekIndex * 100 + DH.G.siteIndex * 7);
+    },
+
     update(dt) {
       t += dt;
       for (const s of spawnQueue) {

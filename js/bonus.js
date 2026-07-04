@@ -64,6 +64,10 @@ DH.bonus = (() => {
       DH.entities.clearParticles();
     },
 
+    onResize() {
+      if (bg) bg = DH.background.build(DH.data.treks[DH.G.trekIndex].env, DH.G.seed + 5000 + DH.G.trekIndex);
+    },
+
     update(dt) {
       t += dt;
       introT = Math.max(0, introT - dt);
@@ -88,7 +92,7 @@ DH.bonus = (() => {
         if (endT <= 0) finish();
         return;
       }
-      const allResolved = queue.every((q) => q.spawned && (!q.duck || q.duck.gone || q.duck.state === 'dying'));
+      const allResolved = queue.every((q) => q.spawned && (!q.duck || !q.duck.alive));
       if (t >= DH.data.bonus.duration || allResolved) endT = 1.0;
     },
 

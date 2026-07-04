@@ -71,6 +71,9 @@ DH.screens = (() => {
       DH.main.newRun();
       DH.entities.clearParticles();
     },
+    onResize() {
+      if (titleBg) titleBg = DH.background.build('forest', DH.G.seed + 1);
+    },
     update(dt) {
       titleT += dt;
       if (titleT >= nextWander) {
@@ -139,6 +142,9 @@ DH.screens = (() => {
       }
       selT = 0;
       previews = previews || DH.data.treks.map((tk, i) => DH.background.build(tk.env, 777 + i));
+    },
+    onResize() {
+      previews = DH.data.treks.map((tk, i) => DH.background.build(tk.env, 777 + i));
     },
     update(dt) { selT += dt; },
     render(ctx) {

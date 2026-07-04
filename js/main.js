@@ -59,9 +59,28 @@ DH.main = (() => {
   function dispatch(type, a, b) {
     if (!cur) return;
     if (type === 'key' && (a === 'm' || a === 'M')) { DH.audio.toggleMute(); return; }
+    if (type === 'key' && (a === 'f' || a === 'F')) { toggleFullscreen(); return; }
+    if (type === 'click' && DH.hud.fsHit(a, b)) { toggleFullscreen(); return; }
     if (type === 'click' && cur.onClick) cur.onClick(a, b);
     else if (type === 'rclick' && cur.onRclick) cur.onRclick(a, b);
     else if (type === 'key' && cur.onKey) cur.onKey(a);
+  }
+
+  function toggleFullscreen() {
+    const doc = document;
+    if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+      (doc.exitFullscreen || doc.webkitExitFullscreen).call(doc);
+      return;
+    }
+    const el = doc.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!req) return;
+    try {
+      const p = req.call(el, { navigationUI: 'hide' });
+      if (p && p.catch) p.catch(() => DH.hud.banner('FULLSCREEN BLOCKED HERE', '#ff8a7a', 1.6));
+    } catch (e) {
+      DH.hud.banner('FULLSCREEN BLOCKED HERE', '#ff8a7a', 1.6);
+    }
   }
 
   function fitCanvas() {
@@ -122,8 +141,25 @@ DH.main = (() => {
     DH.HUDL = (DH.W - 960) / 2;
     DH.HUDR = DH.W - DH.HUDL;
     canvas.width = DH.W;
-    window.addEventListener('resize', fitCanvas);
-    if (window.visualViewport) window.visualViewport.addEventListener('resize', fitCanvas);
+    // viewport changes (rotation, fullscreen) re-derive the logical width;
+    // states with baked backgrounds rebuild via their onResize hook
+    const onViewportChange = () => {
+      fitCanvas();
+      if (params.get('w')) return;
+      const newW = computeWidth();
+      if (Math.abs(newW - DH.W) < 12) return;
+      DH.W = newW;
+      DH.CX = newW / 2;
+      DH.HUDL = (newW - 960) / 2;
+      DH.HUDR = newW - DH.HUDL;
+      canvas.width = newW;
+      if (cur && cur.onResize) cur.onResize();
+      fitCanvas();
+    };
+    window.addEventListener('resize', onViewportChange);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', onViewportChange);
+    document.addEventListener('fullscreenchange', onViewportChange);
+    document.addEventListener('webkitfullscreenchange', onViewportChange);
     fitCanvas();
     DH.input.init(canvas);
     DH.sprites.registerAll();

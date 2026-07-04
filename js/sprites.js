@@ -300,6 +300,7 @@ DH.sprites = (() => {
       A.register(`duck_${f}`, { w: 64, h: 48, anchorY: 0.5, draw: (ctx) => duck(ctx, { frame: f % 2 }) });
     }
     A.register('duck_fall', { w: 64, h: 48, anchorY: 0.5, draw: (ctx) => duck(ctx, { frame: 1 }) });
+    A.register('duck_dead', { w: 64, h: 48, anchorY: 0.5, draw: (ctx) => duck(ctx, { frame: 1 }) });
     for (let f = 0; f < 2; f++) {
       A.register(`muzzle_${f}`, { w: 56, h: 56, anchorY: 0.5, draw: (ctx) => muzzleFlash(ctx, { frame: f }) });
     }

@@ -151,6 +151,7 @@ DH.hud = (() => {
   }
 
   function drawMute(ctx) {
+    drawFullscreen(ctx);      // rides along everywhere the mute icon shows
     ctx.save();
     ctx.globalAlpha = 0.8;
     ctx.translate(DH.HUDR - 22, 76);
@@ -170,6 +171,37 @@ DH.hud = (() => {
 
   function muteHit(x, y) { return x > DH.HUDR - 44 && x < DH.HUDR + 8 && y > 56 && y < 96; }
 
+  function fsAvailable() {
+    const el = document.documentElement;
+    return !!(el.requestFullscreen || el.webkitRequestFullscreen);
+  }
+
+  function drawFullscreen(ctx) {
+    if (!fsAvailable()) return;
+    ctx.save();
+    ctx.globalAlpha = 0.8;
+    ctx.translate(DH.HUDR - 22, 116);
+    ctx.strokeStyle = '#e8f0e8';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    const inFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    // four corner brackets, pointing out (enter) or in (exit)
+    for (const [sx, sy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+      ctx.beginPath();
+      if (inFs) {
+        ctx.moveTo(sx * 10, sy * 4); ctx.lineTo(sx * 4, sy * 4); ctx.lineTo(sx * 4, sy * 10);
+      } else {
+        ctx.moveTo(sx * 4, sy * 10); ctx.lineTo(sx * 10, sy * 10); ctx.lineTo(sx * 10, sy * 4);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function fsHit(x, y) {
+    return fsAvailable() && x > DH.HUDR - 44 && x < DH.HUDR + 8 && y > 98 && y < 136;
+  }
+
   function drawCrosshair(ctx) {
     if (!DH.input.mouse.inside && !DH.G.testMode) return;
     const k = 1 + kick * 0.45;
@@ -177,5 +209,5 @@ DH.hud = (() => {
   }
 
   return { draw, banner, update, drawCrosshair, crosshairKick, syncScore, label,
-           muteHit, drawMute, reloadHit };
+           muteHit, drawMute, reloadHit, fsHit };
 })();

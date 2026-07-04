@@ -98,6 +98,11 @@ SHEETS.push(
   { file: 'duck_fall.png', cells: 1, take: [0],
     names: ['duck_fall'],
     box: { w: 64, h: 48 }, fill: 0.9, fit: 'h', lineErase: false },
+  // the generator packed extra flyers into this one — take only the
+  // feet-up corpse at the bottom
+  { file: 'duck_dead_sheet.png', boxes: [{ x0: 80, x1: 930, y0: 430, y1: 900 }],
+    names: ['duck_dead'],
+    box: { w: 64, h: 48 }, fill: 0.95, fit: 'w', lineErase: false },
   { file: 'cartridge_icon.png', cells: 1, take: [0],
     names: ['cartridge'],
     box: { w: 10, h: 26 }, fill: 0.95, fit: 'h', lineErase: false },
