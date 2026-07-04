@@ -263,9 +263,86 @@ DH.background = (() => {
     },
   };
 
+  // Painted-art layer placement: how source rows map onto the 540-high scene.
+  // mode 'anchor' = uniform scale with the given source row pinned to dstY
+  // (no squash); mode 'band' = stretch srcY0..srcY1 into dstY0..dstY1.
+  const ART_LAYOUT = {
+    far:    { par: 0.08, mode: 'band', srcY0: 140, srcY1: 432, dstY0: 55, dstY1: 333 },
+    mid:    { par: 0.22, mode: 'tile', srcRow: 445, dstY: 340 },   // mirror-tiled half scale
+    ground: { par: 0.5,  mode: 'anchor', srcRow: 0, dstY: 288 },
+  };
+
+  // mirror every other tile so the seam edges always match; phase-shift the
+  // start so the mirror seam doesn't sit at screen center
+  function drawMirrorTiled(ctx, img, x0, y, tw, th) {
+    x0 -= tw * 0.35;
+    for (let i = 0; i < 4; i++) {
+      if (i % 2) {
+        ctx.save();
+        ctx.translate(x0 + (i + 0.5) * tw, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(img, -tw / 2, y, tw, th);
+        ctx.restore();
+      } else {
+        ctx.drawImage(img, x0 + i * tw, y, tw, th);
+      }
+    }
+  }
+
+  function buildArt(env, rng) {
+    const A = DH.artimg;
+    const sky = A[env + '_sky'];
+    const front = A[env + '_front'] || null;
+    const imgs = { far: A[env + '_far'], mid: A[env + '_mid'], ground: A[env + '_ground'] };
+    const def = front ? null : ENVS[env](rng);   // procedural brush only as fallback
+
+    function drawLayer(ctx, key, camX) {
+      const img = imgs[key], L = ART_LAYOUT[key];
+      const x = -M - camX * L.par;
+      if (L.mode === 'tile') {
+        const tw = Math.ceil((W + 2 * M) / 2);
+        const s = tw / img.width;
+        drawMirrorTiled(ctx, img, x, L.dstY - L.srcRow * s, tw, img.height * s);
+      } else if (L.mode === 'anchor') {
+        const s = (W + 2 * M) / img.width;
+        ctx.drawImage(img, x, L.dstY - L.srcRow * s, img.width * s, img.height * s);
+      } else {
+        ctx.drawImage(img, 0, L.srcY0, img.width, L.srcY1 - L.srcY0,
+                      x, L.dstY0, W + 2 * M, L.dstY1 - L.dstY0);
+      }
+    }
+
+    return {
+      render(ctx, camX) {
+        const ss = W / sky.width;
+        ctx.drawImage(sky, 0, 0, W, sky.height * ss);
+        drawLayer(ctx, 'far', camX);
+        drawLayer(ctx, 'mid', camX);
+        drawLayer(ctx, 'ground', camX);
+      },
+      renderFront(ctx, camX) {
+        if (!front) {
+          ctx.drawImage(def.front, -M - camX, 0);
+          return;
+        }
+        // painted brush at half scale keeps the fringe a bottom rim
+        // instead of swallowing the near lane
+        const tw = Math.ceil((W + 2 * M) / 2);
+        const s = tw / front.width;
+        drawMirrorTiled(ctx, front, -M - camX, 540 - front.height * s, tw, front.height * s);
+      },
+    };
+  }
+
+  function hasArt(env) {
+    const A = DH.artimg || {};
+    return ['sky', 'far', 'mid', 'ground'].every((k) => A[env + '_' + k]);
+  }
+
   function build(env, seed) {
     W = DH.W;                       // bake layers at the live logical width
     const rng = DH.util.mulberry32(seed);
+    if (hasArt(env)) return buildArt(env, rng);
     const def = ENVS[env](rng);
     // clouds share one implementation; seeded start positions
     const clouds = [];

@@ -105,13 +105,23 @@ DH.entities = (() => {
       return { x: 0, y: 0 };
     }
 
+    hasDeathFrames() {
+      const def = DH.assets.get(`${this.sp}_${this.role}_death_0`);
+      return !!(def && def.img);
+    }
+
     kill() {
       this.state = 'dying';
       this.stateT = 0;
-      this.dyVx = this.dir * 30;
-      this.dyVy = -170;
-      this.dyY = -0.01;
-      this.rotV = (this.dir > 0 ? -1 : 1) * (2.2 + DH.util.rand() * 1.2);
+      if (this.hasDeathFrames()) {
+        // painted collapse plays in place — no cartoon tumble
+        this.dyVx = 0; this.dyVy = 0; this.dyY = 0; this.rotV = 0;
+      } else {
+        this.dyVx = this.dir * 30;
+        this.dyVy = -170;
+        this.dyY = -0.01;
+        this.rotV = (this.dir > 0 ? -1 : 1) * (2.2 + DH.util.rand() * 1.2);
+      }
     }
 
     frameName() {
@@ -122,8 +132,14 @@ DH.entities = (() => {
     }
 
     draw(ctx) {
-      const name = this.state === 'dying' || this.state === 'dead'
-        ? `${this.sp}_${this.role}_run_1` : this.frameName();
+      let name;
+      if (this.state === 'dying' || this.state === 'dead') {
+        name = this.hasDeathFrames()
+          ? `${this.sp}_${this.role}_death_${Math.min(2, Math.floor(this.stateT / 0.3))}`
+          : `${this.sp}_${this.role}_run_1`;
+      } else {
+        name = this.frameName();
+      }
       DH.assets.draw(ctx, name, this.x, this.lane.y + this.dyY, {
         scale: this.scale, dir: this.dir, rot: this.rot * (this.dir > 0 ? 1 : -1),
         alpha: this.alpha, trophy: this.trophy,

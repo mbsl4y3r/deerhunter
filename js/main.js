@@ -129,9 +129,24 @@ DH.main = (() => {
     DH.sprites.registerAll();
     setState('BOOT');
     requestAnimationFrame(loop);
-    DH.assets.probeOverrides().then(() => {
+    // decode painted background layers (js/artdata.js data URIs)
+    DH.artimg = {};
+    const artReady = Promise.all(Object.entries(DH.artdata || {}).map(([k, uri]) =>
+      new Promise((res) => {
+        const img = new Image();
+        img.onload = () => { DH.artimg[k] = img; res(); };
+        img.onerror = () => res();
+        img.src = uri;
+      })));
+    Promise.all([DH.assets.probeOverrides(), artReady]).then(() => {
+      // artdata keys that match registered sprite names become overrides
+      // (assets/*.png files, if present, win — they load into .img first)
+      for (const [k, img] of Object.entries(DH.artimg)) {
+        const def = DH.assets.get(k);
+        if (def && !def.img) def.img = img;
+      }
       if (DH.assets.overrideCount() > 0) {
-        console.log(`DeerHunter: using ${DH.assets.overrideCount()} PNG sprite override(s) from assets/`);
+        console.log(`DeerHunter: ${DH.assets.overrideCount()} sprite override(s) active`);
       }
       setState('TITLE');
     });

@@ -260,6 +260,13 @@ DH.sprites = (() => {
         A.register(`${spKey}_${role}_graze`, {
           w, h, draw: (ctx, o) => quadruped(ctx, spKey, { role, gait: 'graze', phase: 0, trophy: o.trophy }),
         });
+        // death collapse frames: procedural fallback is the run pose (the
+        // tumble animation); with PNG overrides the collapse plays in place
+        for (let f = 0; f < 3; f++) {
+          A.register(`${spKey}_${role}_death_${f}`, {
+            w, h, draw: (ctx, o) => quadruped(ctx, spKey, { role, gait: 'run', phase: 0.5, trophy: o.trophy }),
+          });
+        }
       }
     }
     for (let f = 0; f < 2; f++) {
