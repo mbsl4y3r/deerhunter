@@ -35,6 +35,7 @@ DH.entities = (() => {
     }
 
     get alive() { return this.state === 'cross' || this.state === 'graze' || this.state === 'flee'; }
+    get down() { return this.state === 'dying' || this.state === 'downed' || this.state === 'dead'; }
     get gone() { return this.state === 'dead' || this.escaped; }
 
     speed() {
@@ -72,14 +73,12 @@ DH.entities = (() => {
       } else if (this.state === 'graze') {
         if (this.stateT >= this.grazeDur) { this.state = 'cross'; this.stateT = 0; }
       } else if (this.state === 'dying' && this.rotV === 0 && this.dyVy === 0 && this.dyVx === 0) {
-        // painted collapse: body thumps down between frames 2 and 3
+        // painted collapse: body thumps down partway through the frames,
+        // then the animal stays down until the site ends (Oregon Trail style)
         if (this.stateT - dt < 0.55 && this.stateT >= 0.55) {
           spawnDust(this.x, this.lane.y, this.scale);
         }
-        if (this.stateT > 1.2) {
-          this.alpha = Math.max(0, 1 - (this.stateT - 1.2) / 0.4);
-          if (this.alpha === 0) this.state = 'dead';
-        }
+        if (this.stateT > this.deathFrameCount() * 0.28 + 0.2) this.state = 'downed';
       } else if (this.state === 'dying') {
         this.dyVy += 900 * dt;
         this.x += this.dyVx * dt;
@@ -93,9 +92,10 @@ DH.entities = (() => {
             this.rotV *= 0.4;
           } else { this.dyVy = 0; this.rotV = 0; }
         }
-        if (this.stateT > 0.9) {
-          this.alpha = Math.max(0, 1 - (this.stateT - 0.9) / 0.35);
-          if (this.alpha === 0) this.state = 'dead';
+        if (this.stateT > 0.9 && this.dyVy === 0) {
+          // settle flat on the side and stay there until the site ends
+          this.rot = (this.rot >= 0 ? 1 : -1) * Math.PI / 2;
+          this.state = 'downed';
         }
       }
     }
@@ -118,10 +118,17 @@ DH.entities = (() => {
       return { x: 0, y: 0 };
     }
 
-    hasDeathFrames() {
-      const def = DH.assets.get(`${this.sp}_${this.skin}_death_0`);
-      return !!(def && def.img);
+    deathFrameCount() {
+      let n = 0;
+      while (n < 4) {
+        const def = DH.assets.get(`${this.sp}_${this.skin}_death_${n}`);
+        if (!def || !def.img) break;
+        n++;
+      }
+      return n;
     }
+
+    hasDeathFrames() { return this.deathFrameCount() > 0; }
 
     kill() {
       this.state = 'dying';
@@ -146,10 +153,11 @@ DH.entities = (() => {
 
     draw(ctx) {
       let name;
-      if (this.state === 'dying' || this.state === 'dead') {
-        name = this.hasDeathFrames()
-          ? `${this.sp}_${this.role}_death_${Math.min(2, Math.floor(this.stateT / 0.3))}`
-          : `${this.sp}_${this.role}_run_1`;
+      if (this.down) {
+        const n = this.deathFrameCount();
+        name = n > 0
+          ? `${this.sp}_${this.skin}_death_${this.state === 'downed' ? n - 1 : Math.min(n - 1, Math.floor(this.stateT / 0.28))}`
+          : `${this.sp}_${this.skin}_run_1`;
       } else {
         name = this.frameName();
       }

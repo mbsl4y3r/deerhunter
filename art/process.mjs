@@ -47,6 +47,29 @@ const SHEETS = [
     box: { w: 176, h: 171 }, fill: 0.95, fit: 'h' },
 ];
 
+// 2×2 monster sheets: quadrants inset past the drawn grid lines. The
+// grizzled coat is desaturated, so line erasers stay off (lineErase: false);
+// grid-line remnants and watermark sparkles are handled by insets + keying.
+const Q = [
+  { x0: 8, x1: 504, y0: 8, y1: 504 }, { x0: 520, x1: 1016, y0: 8, y1: 504 },
+  { x0: 8, x1: 504, y0: 520, y1: 1016 }, { x0: 520, x1: 1016, y0: 520, y1: 1016 },
+];
+const MBOX = { w: 203, h: 202 };
+SHEETS.push(
+  { file: 'deer_monster_walk_sheet.png', boxes: Q,
+    names: ['deer_monster_walk_0', 'deer_monster_walk_1', 'deer_monster_walk_2', 'deer_monster_walk_3'],
+    box: MBOX, fill: 0.95, fit: 'h', lineErase: false },
+  { file: 'deer_monster_run_sheet.png', boxes: [Q[1], Q[3]],   // gathered + stretched
+    names: ['deer_monster_run_0', 'deer_monster_run_1'],
+    box: MBOX, fill: 0.95, fit: 'h', lineErase: false },
+  { file: 'deer_monster_graze_sheet.png', boxes: [{ x0: 0, x1: 1024, y0: 0, y1: 1024 }],
+    names: ['deer_monster_graze'],
+    box: MBOX, fill: 0.92, fit: 'w', lineErase: false },
+  { file: 'deer_monster_death_sheet.png', boxes: Q,
+    names: ['deer_monster_death_0', 'deer_monster_death_1', 'deer_monster_death_2', 'deer_monster_death_3'],
+    box: MBOX, fill: 0.95, fit: 'h', lineErase: false },
+);
+
 const browser = await chromium.launch({ headless: true, executablePath: '/opt/pw-browsers/chromium' });
 const page = await browser.newPage();
 

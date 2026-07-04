@@ -268,7 +268,7 @@ DH.sprites = (() => {
         });
         // death collapse frames: procedural fallback is the run pose (the
         // tumble animation); with PNG overrides the collapse plays in place
-        for (let f = 0; f < 3; f++) {
+        for (let f = 0; f < 4; f++) {
           A.register(`${spKey}_${role}_death_${f}`, {
             w: bw, h: bh, draw: (ctx, o) => quadruped(ctx, spKey, { role: paintRole, gait: 'run', phase: 0.5, trophy: o.trophy }),
           });

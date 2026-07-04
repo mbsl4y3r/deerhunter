@@ -31,7 +31,7 @@ DH.hunt = (() => {
     // status per buck spawn entry, in spawn order (for HUD tags + results)
     return spawnQueue.filter((s) => s.role === 'buck').map((s) => {
       if (!s.animal) return 'pending';
-      if (s.animal.state === 'dying' || s.animal.state === 'dead') return 'killed';
+      if (s.animal.down) return 'killed';
       if (s.animal.escaped) return 'escaped';
       return 'pending';
     });
@@ -154,8 +154,7 @@ DH.hunt = (() => {
         endT = 0.6;
       } else {
         const bucks = spawnQueue.filter((s) => s.role === 'buck');
-        const allDone = bucks.every((s) => s.spawned && (!s.animal || s.animal.gone ||
-          s.animal.state === 'dying'));
+        const allDone = bucks.every((s) => s.spawned && (!s.animal || s.animal.gone || s.animal.down));
         if (allDone && bucks.every((s) => s.animal)) endT = 1.2;
       }
     },
@@ -201,8 +200,8 @@ DH.hunt = (() => {
 
     // ---- test hooks ----
     _animals() { return animals; },
-    _forceSpawn(role) {
-      return spawn({ role, lane: 1, side: 'L', behavior: 'walk', trophy: [3, 3], t: 0 });
+    _forceSpawn(role, trophy) {
+      return spawn({ role, lane: 1, side: 'L', behavior: 'walk', trophy: [trophy || 3, trophy || 3], t: 0 });
     },
     _time() { return t; },
   };

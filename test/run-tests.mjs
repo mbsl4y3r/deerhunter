@@ -57,7 +57,8 @@ async function playSite(page) {
     const st = await D(page, 'state');
     if (st !== 'HUNTING') return st;
     const { buck, shells } = await page.evaluate(() => ({
-      buck: window.__DH.animals().find((a) => a.role === 'buck' && a.onScreen && a.state !== 'dying'),
+      buck: window.__DH.animals().find((a) => a.role === 'buck' && a.onScreen &&
+        ['cross', 'graze', 'flee'].includes(a.state)),
       shells: window.__DH.shells(),
     }));
     if (buck) {

@@ -180,9 +180,9 @@ DH.main = (() => {
           for (let i = 0; i < steps; i++) tick(1 / 60);
           render();
         },
-        forceSpawn: (role) => {
+        forceSpawn: (role, trophy) => {
           const st = DH.states[DH.G.stateName];
-          return st && st._forceSpawn ? !!st._forceSpawn(role) : false;
+          return st && st._forceSpawn ? !!st._forceSpawn(role, trophy) : false;
         },
         skipToState: (name, p) => setState(name, p),
         setScore: (n) => { DH.G.score = n; DH.hud.syncScore(); },
