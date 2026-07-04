@@ -1,6 +1,6 @@
 # 🦌 Deer Hunter
 
-An arcade rail-shooter in the spirit of **Big Buck Hunter HD** — pure vanilla
+A classic arcade-style rail-shooter hunting game — pure vanilla
 JavaScript + HTML5 Canvas. No build step, no dependencies, no downloaded
 assets: every sprite, background, and sound effect is generated in code.
 

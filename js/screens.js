@@ -105,13 +105,13 @@ DH.screens = (() => {
 
       if (DH.artimg && DH.artimg.logo) {
         DH.assets.draw(ctx, 'logo', CX, 115);
-        L(ctx, 'A BIG BUCK ARCADE TRIBUTE', CX, 222, 15, '#cfe3cf', 'center');
+        L(ctx, 'AN ARCADE HUNTING TRIBUTE', CX, 222, 15, '#cfe3cf', 'center');
       } else {
         logoAntler(ctx, CX - 195, 108, false);
         logoAntler(ctx, CX + 195, 108, true);
         L(ctx, 'DEER', CX, 105, 74, '#ffd94d', 'center');
         L(ctx, 'HUNTER', CX, 168, 54, '#f2ead0', 'center');
-        L(ctx, 'A BIG BUCK ARCADE TRIBUTE', CX, 196, 15, '#cfe3cf', 'center');
+        L(ctx, 'AN ARCADE HUNTING TRIBUTE', CX, 196, 15, '#cfe3cf', 'center');
       }
 
       if (Math.floor(titleT * 1.6) % 2 === 0) {

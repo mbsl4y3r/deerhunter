@@ -1,6 +1,6 @@
 # Deer Hunter — project notes
 
-Big Buck Hunter-style arcade rail-shooter. Vanilla JS + Canvas, no build
+Arcade-style rail-shooter hunting game (think coin-op hunting cabinets). Vanilla JS + Canvas, no build
 step, no runtime dependencies. See README.md for gameplay and structure.
 
 ## Workflow rules
