@@ -15,11 +15,11 @@ DH.entities = (() => {
       this.lane = DH.data.LANES[cfg.lane];
       this.behavior = cfg.behavior || 'walk';
       this.trophy = cfg.trophy || 3;
-      this.pauses = (cfg.pauses || []).map((p) => ({ atX: p.atX * 960, dur: p.dur, done: false }));
+      this.pauses = (cfg.pauses || []).map((p) => ({ atX: p.atX * DH.W, dur: p.dur, done: false }));
       this.scale = lerp(0.35, 1.0, this.lane.depth) * this.def.bodyScale;
       this.dir = cfg.side === 'L' ? 1 : -1;
       const margin = this.def.p.bodyLen * 1.3 * this.scale + 30;
-      this.x = cfg.side === 'L' ? -margin : 960 + margin;
+      this.x = cfg.side === 'L' ? -margin : DH.W + margin;
       this.exitMargin = margin;
       this.state = 'cross';           // cross | graze | flee | dying | dead
       this.legPhase = DH.util.rand();
@@ -62,7 +62,7 @@ DH.entities = (() => {
             }
           }
         }
-        if (this.x < -this.exitMargin - 5 || this.x > 960 + this.exitMargin + 5) {
+        if (this.x < -this.exitMargin - 5 || this.x > DH.W + this.exitMargin + 5) {
           this.escaped = true;
         }
       } else if (this.state === 'graze') {
@@ -93,8 +93,16 @@ DH.entities = (() => {
       if (DH.util.rand() < this.def.spookChance) {
         this.state = 'flee';
         this.stateT = 0;
-        this.dir = this.x > 480 ? 1 : -1;
+        this.dir = this.x > DH.CX ? 1 : -1;
       }
+    }
+
+    // current screen-space velocity (used by the test bot to lead shots)
+    velocity() {
+      if (this.state === 'cross' || this.state === 'flee') {
+        return { x: this.dir * this.speed() * this.scale, y: 0 };
+      }
+      return { x: 0, y: 0 };
     }
 
     kill() {
@@ -146,7 +154,7 @@ DH.entities = (() => {
 
     onScreen() {
       const half = this.def.p.bodyLen * 0.7 * this.scale;
-      return this.x > half * 0.2 && this.x < 960 - half * 0.2;
+      return this.x > half * 0.2 && this.x < DH.W - half * 0.2;
     }
   }
 
@@ -155,7 +163,7 @@ DH.entities = (() => {
     constructor(cfg) {                 // { side, speed, y }
       this.def = DH.data.species.duck;
       this.dir = cfg.side === 'L' ? 1 : -1;
-      this.x = cfg.side === 'L' ? -50 : 1010;
+      this.x = cfg.side === 'L' ? -50 : DH.W + 50;
       this.y = cfg.y;
       this.speed = cfg.speed;
       this.vy = -(28 + DH.util.rand() * 30);
@@ -177,7 +185,7 @@ DH.entities = (() => {
         this.x += this.dir * this.speed * dt;
         this.y += this.vy * dt + Math.sin(this.stateT * 5 + this.wob) * 26 * dt;
         if (this.y < 55) this.vy = Math.abs(this.vy) * 0.4;
-        if (this.x < -70 || this.x > 1030) this.escaped = true;
+        if (this.x < -70 || this.x > DH.W + 70) this.escaped = true;
       } else if (this.state === 'dying') {
         this.y += (this.stateT * 780) * dt;
         this.x += this.dir * 26 * dt;
@@ -201,7 +209,12 @@ DH.entities = (() => {
     }
 
     vitalsPoint() { return { x: this.x, y: this.y }; }
-    onScreen() { return this.x > 30 && this.x < 930; }
+    onScreen() { return this.x > 30 && this.x < DH.W - 30; }
+
+    velocity() {
+      if (this.state !== 'fly') return { x: 0, y: 0 };
+      return { x: this.dir * this.speed, y: this.vy };
+    }
   }
 
   // ---- particles & popups ----
@@ -240,7 +253,7 @@ DH.entities = (() => {
   }
 
   function spawnPopup(x, y, text, color) {
-    particles.push({ type: 'popup', x: clamp(x, 70, 890), y: clamp(y, 60, 500), text, color, t: 0, life: 1.1 });
+    particles.push({ type: 'popup', x: clamp(x, 70, DH.W - 70), y: clamp(y, 60, 500), text, color, t: 0, life: 1.1 });
   }
 
   function updateParticles(dt) {

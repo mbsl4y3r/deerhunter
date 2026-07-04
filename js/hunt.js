@@ -10,6 +10,7 @@ DH.hunt = (() => {
   let stats = null;
   let endT = null;            // countdown to SITE_RESULTS once the site is decided
   let doeFlash = 0;
+  let siteToken = 0;          // stale-bullet guard: impacts from a previous site are ignored
 
   function spawn(cfg) {
     const a = new DH.entities.Animal({
@@ -65,9 +66,43 @@ DH.hunt = (() => {
     DH.setState('SITE_RESULTS', rec);
   }
 
+  // a bullet has landed at (x, y)
+  function impact(x, y) {
+    const res = DH.shooting.resolveImpact(x, y, animals.filter((a) => a.alive));
+    if (!res) {
+      if (y > 290) DH.entities.spawnDust(x, y, 0.7);   // dirt kick on the ground
+      return;
+    }
+    stats.hits++;
+    const a = res.hit;
+    DH.entities.spawnPuff(x, y, a.scale);
+    if (a.role === 'buck') {
+      const pts = killPoints(a, res.part, res.mult);
+      DH.G.score += pts;
+      stats.kills.push({ species: a.sp, trophy: a.trophy, part: res.part, points: pts,
+                         running: a.state === 'flee' || a.behavior === 'run' });
+      a.kill();
+      DH.audio.play('thud');
+      DH.entities.spawnPopup(x, y - 30, '+' + DH.util.fmtScore(pts),
+                             res.part === 'head' ? '#ffe97a' : '#ffd94d');
+      if (res.part === 'head') DH.hud.banner('TROPHY SHOT!', '#ffe97a', 1.0);
+      else if (a.trophy >= 5) DH.hud.banner('MONSTER BUCK!', '#ffd94d', 1.0);
+    } else {
+      // shot a doe: penalty, site over
+      stats.doeHit = true;
+      DH.G.score += DH.data.scoring.doePenalty;
+      a.kill();
+      doeFlash = 1;
+      DH.audio.play('buzzer');
+      DH.entities.spawnPopup(x, y - 30, DH.util.fmtScore(DH.data.scoring.doePenalty), '#ff5a4a');
+      DH.hud.banner("DON'T SHOOT THE DOES!", '#ff5a4a', 1.6);
+    }
+  }
+
   DH.states = DH.states || {};
   DH.states.HUNTING = {
     enter() {
+      siteToken++;
       trek = DH.data.treks[DH.G.trekIndex];
       site = trek.sites[DH.G.siteIndex];
       bg = DH.background.build(trek.env, DH.G.seed + DH.G.trekIndex * 100 + DH.G.siteIndex * 7);
@@ -100,7 +135,7 @@ DH.hunt = (() => {
       doeFlash = Math.max(0, doeFlash - dt * 1.6);
 
       // camera pans slightly with the mouse
-      const targetCam = ((DH.input.mouse.x - 480) / 480) * 30;
+      const targetCam = ((DH.input.mouse.x - DH.CX) / DH.CX) * 30;
       DH.G.camX += (targetCam - DH.G.camX) * Math.min(1, dt * 5);
 
       if (endT != null) {
@@ -127,36 +162,14 @@ DH.hunt = (() => {
 
     onClick(x, y) {
       if (DH.hud.muteHit(x, y)) { DH.audio.toggleMute(); return; }
+      if (DH.hud.reloadHit(x, y)) { DH.shooting.reload(); return; }
       if (stats.doeHit) return;                    // site over, ignore
-      const res = DH.shooting.tryFire(x, y, animals.filter((a) => a.alive));
-      if (!res.fired) return;
-      stats.shots++;
-      if (res.hit) {
-        stats.hits++;
-        const a = res.hit;
-        DH.entities.spawnPuff(x, y, a.scale);
-        if (a.role === 'buck') {
-          const pts = killPoints(a, res.part, res.mult);
-          DH.G.score += pts;
-          stats.kills.push({ species: a.sp, trophy: a.trophy, part: res.part, points: pts,
-                             running: a.state === 'flee' || a.behavior === 'run' });
-          a.kill();
-          DH.audio.play('thud');
-          DH.entities.spawnPopup(x, y - 30, '+' + DH.util.fmtScore(pts),
-                                 res.part === 'head' ? '#ffe97a' : '#ffd94d');
-          if (res.part === 'head') DH.hud.banner('TROPHY SHOT!', '#ffe97a', 1.0);
-          else if (a.trophy >= 5) DH.hud.banner('MONSTER BUCK!', '#ffd94d', 1.0);
-        } else {
-          // shot a doe: penalty, site over
-          stats.doeHit = true;
-          DH.G.score += DH.data.scoring.doePenalty;
-          a.kill();
-          doeFlash = 1;
-          DH.audio.play('buzzer');
-          DH.entities.spawnPopup(x, y - 30, DH.util.fmtScore(DH.data.scoring.doePenalty), '#ff5a4a');
-          DH.hud.banner("DON'T SHOOT THE DOES!", '#ff5a4a', 1.6);
-        }
-      }
+      const token = siteToken;
+      const res = DH.shooting.tryFire(x, y, (ix, iy) => {
+        if (token !== siteToken || DH.G.stateName !== 'HUNTING' || stats.doeHit) return;
+        impact(ix, iy);
+      });
+      if (res.fired) stats.shots++;
     },
 
     onRclick() { DH.shooting.reload(); },
@@ -172,10 +185,10 @@ DH.hunt = (() => {
       for (const a of sorted) a.draw(ctx);
       DH.entities.drawParticles(ctx);
       bg.renderFront(ctx, DH.G.camX);
-      DH.shooting.drawFlash(ctx);
+      DH.shooting.drawShots(ctx);
       if (doeFlash > 0) {
         ctx.fillStyle = `rgba(200,30,20,${0.35 * doeFlash})`;
-        ctx.fillRect(0, 0, 960, 540);
+        ctx.fillRect(0, 0, DH.W, 540);
       }
       DH.hud.draw(ctx, {
         shells: true,

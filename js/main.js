@@ -6,6 +6,21 @@ DH.main = (() => {
   const testMode = params.get('test') === '1';
   if (params.get('nosound') === '1') DH.audio.disable();
 
+  // Logical height is fixed at 540; logical width stretches to the device
+  // aspect (capped) so wide phones get a full-bleed scene instead of bars.
+  // The classic 960-wide "core" stays centered: DH.CX is screen center and
+  // DH.HUDL/DH.HUDR are the core's edges, where HUD elements anchor (this
+  // also keeps them clear of notches / Dynamic Islands in the overflow).
+  function computeWidth() {
+    const vw = (window.visualViewport && window.visualViewport.width) || window.innerWidth;
+    const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    return Math.round(DH.util.clamp((540 * vw) / vh, 960, 1200));
+  }
+  DH.W = 960;
+  DH.CX = 480;
+  DH.HUDL = 0;
+  DH.HUDR = 960;
+
   DH.G = {
     seed,
     rng: DH.util.mulberry32(seed),          // gameplay RNG (deterministic per seed)
@@ -50,11 +65,13 @@ DH.main = (() => {
   }
 
   function fitCanvas() {
-    const s = Math.min(window.innerWidth / 960, window.innerHeight / 540);
-    canvas.style.width = `${960 * s}px`;
+    const vw = (window.visualViewport && window.visualViewport.width) || window.innerWidth;
+    const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    const s = Math.min(vw / DH.W, vh / 540);
+    canvas.style.width = `${DH.W * s}px`;
     canvas.style.height = `${540 * s}px`;
-    canvas.style.left = `${(window.innerWidth - 960 * s) / 2}px`;
-    canvas.style.top = `${(window.innerHeight - 540 * s) / 2}px`;
+    canvas.style.left = `${(vw - DH.W * s) / 2}px`;
+    canvas.style.top = `${(vh - 540 * s) / 2}px`;
   }
 
   function tick(dt) {
@@ -90,15 +107,23 @@ DH.main = (() => {
   DH.states.BOOT = {
     render(c) {
       c.fillStyle = '#0d1a12';
-      c.fillRect(0, 0, 960, 540);
-      DH.hud.label(c, 'LOADING...', 480, 280, 24, '#cfe3cf', 'center');
+      c.fillRect(0, 0, DH.W, 540);
+      DH.hud.label(c, 'LOADING...', DH.CX, 280, 24, '#cfe3cf', 'center');
     },
   };
 
   window.addEventListener('DOMContentLoaded', () => {
     canvas = document.getElementById('game');
     ctx = canvas.getContext('2d');
+    // pick the logical width once per load (rotating mid-game keeps letterbox
+    // until reload; backgrounds are baked at build width)
+    DH.W = params.get('w') ? parseInt(params.get('w'), 10) : computeWidth();
+    DH.CX = DH.W / 2;
+    DH.HUDL = (DH.W - 960) / 2;
+    DH.HUDR = DH.W - DH.HUDL;
+    canvas.width = DH.W;
     window.addEventListener('resize', fitCanvas);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', fitCanvas);
     fitCanvas();
     DH.input.init(canvas);
     DH.sprites.registerAll();
@@ -122,13 +147,16 @@ DH.main = (() => {
           if (!st || !st._animals) return [];
           return st._animals().map((a) => {
             const v = a.vitalsPoint();
+            const vel = a.velocity();
             return {
               species: a.sp || 'duck', role: a.role || 'duck', state: a.state,
               x: Math.round(v.x * 10) / 10, y: Math.round(v.y * 10) / 10,
+              vx: Math.round(vel.x * 10) / 10, vy: Math.round(vel.y * 10) / 10,
               onScreen: a.onScreen(), trophy: a.trophy || 0,
             };
           });
         },
+        flightTime: (x, y) => DH.shooting.flightTime(x, y),
         click: (x, y) => { DH.input.mouse.x = x; DH.input.mouse.y = y; dispatch('click', x, y); },
         rclick: () => dispatch('rclick', 0, 0),
         key: (k) => dispatch('key', k),

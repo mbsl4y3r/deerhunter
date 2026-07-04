@@ -4,7 +4,8 @@ window.DH = window.DH || {};
 // offscreen canvases (seeded, so each site looks different but stable) and
 // blitted with a parallax offset; only the sky animates live.
 DH.background = (() => {
-  const W = 960, H = 540, M = 48;   // M = parallax margin baked into layers
+  let W = 960;                      // synced to DH.W in build()
+  const H = 540, M = 48;            // M = parallax margin baked into layers
 
   function makeLayer(paint) {
     const c = document.createElement('canvas');
@@ -187,8 +188,8 @@ DH.background = (() => {
           g.ellipse(x - 8, y - 4, (26 + rng() * 20) * 0.5, 12, 0, Math.PI, Math.PI * 2);
           g.fill();
         }
-        pine(g, 30, 585, 130, '#1d3328');
-        pine(g, 935, 590, 140, '#1d3328');
+        pine(g, -M + 78, 585, 130, '#1d3328');
+        pine(g, W + M - 73, 590, 140, '#1d3328');
       });
       const sky = (ctx) => {
         grad(ctx, 0, 0, W, 330, [[0, '#5f89b8'], [0.6, '#a8c4d8'], [1, '#e0e8ea']]);
@@ -263,6 +264,7 @@ DH.background = (() => {
   };
 
   function build(env, seed) {
+    W = DH.W;                       // bake layers at the live logical width
     const rng = DH.util.mulberry32(seed);
     const def = ENVS[env](rng);
     // clouds share one implementation; seeded start positions

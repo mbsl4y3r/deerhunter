@@ -19,6 +19,7 @@ DH.data = (() => {
   const shells = 3;
   const reloadTime = 0.45;
   const fireCooldown = 0.12;
+  const bulletSpeed = 1350;   // logical px/s — shots take time, lead your target
 
   // Painter proportions are in animal-local units: origin at the ground
   // under the body center, +x = facing direction. Hitboxes share the space.
@@ -236,5 +237,5 @@ DH.data = (() => {
     ],
   };
 
-  return { scoring, shells, reloadTime, fireCooldown, species, LANES, treks, bonus };
+  return { scoring, shells, reloadTime, fireCooldown, bulletSpeed, species, LANES, treks, bonus };
 })();

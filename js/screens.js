@@ -1,10 +1,16 @@
 window.DH = window.DH || {};
 
 // Every non-gameplay screen: title/attract, trek select, intros, results,
-// final results, high-score entry and table.
+// final results, high-score entry and table. All layout is anchored to
+// DH.CX (screen center) so wide phone canvases stay composed.
 DH.screens = (() => {
   const { rr, easeOutBack, fmtScore } = DH.util;
   const L = (ctx, ...a) => DH.hud.label(ctx, ...a);
+
+  function fill(ctx) {
+    ctx.fillStyle = '#0d1a12';
+    ctx.fillRect(0, 0, DH.W, 540);
+  }
 
   function panel(ctx, x, y, w, h) {
     ctx.save();
@@ -23,14 +29,9 @@ DH.screens = (() => {
     ctx.font = `${size || 16}px Arial`;
     ctx.textAlign = 'left';
     ctx.fillStyle = '#ffd94d';
-    ctx.fillText('★'.repeat(n) , x, y);
+    ctx.fillText('★'.repeat(n), x, y);
     ctx.fillStyle = 'rgba(255,255,255,0.25)';
     ctx.fillText('★'.repeat(5 - n), x + ctx.measureText('★'.repeat(n)).width, y);
-  }
-
-  function dimBackdrop(ctx, alpha) {
-    ctx.fillStyle = `rgba(8,14,10,${alpha == null ? 0.55 : alpha})`;
-    ctx.fillRect(0, 0, 960, 540);
   }
 
   // decorative antlers for the logo
@@ -88,6 +89,7 @@ DH.screens = (() => {
       titleAnimals = titleAnimals.filter((a) => !a.gone);
     },
     render(ctx) {
+      const CX = DH.CX;
       titleBg.render(ctx, 0, titleT);
       for (const a of [...titleAnimals].sort((x, y) => x.lane.depth - y.lane.depth)) a.draw(ctx);
       titleBg.renderFront(ctx, 0);
@@ -96,21 +98,21 @@ DH.screens = (() => {
       g.addColorStop(0, 'rgba(8,14,10,0.75)');
       g.addColorStop(1, 'rgba(8,14,10,0)');
       ctx.fillStyle = g;
-      ctx.fillRect(0, 0, 960, 300);
+      ctx.fillRect(0, 0, DH.W, 300);
 
-      logoAntler(ctx, 285, 108, false);
-      logoAntler(ctx, 675, 108, true);
-      L(ctx, 'DEER', 480, 105, 74, '#ffd94d', 'center');
-      L(ctx, 'HUNTER', 480, 168, 54, '#f2ead0', 'center');
-      L(ctx, 'A BIG BUCK ARCADE TRIBUTE', 480, 196, 15, '#cfe3cf', 'center');
+      logoAntler(ctx, CX - 195, 108, false);
+      logoAntler(ctx, CX + 195, 108, true);
+      L(ctx, 'DEER', CX, 105, 74, '#ffd94d', 'center');
+      L(ctx, 'HUNTER', CX, 168, 54, '#f2ead0', 'center');
+      L(ctx, 'A BIG BUCK ARCADE TRIBUTE', CX, 196, 15, '#cfe3cf', 'center');
 
       if (Math.floor(titleT * 1.6) % 2 === 0) {
-        L(ctx, 'CLICK TO HUNT', 480, 330, 30, '#fff', 'center');
+        L(ctx, 'TAP OR CLICK TO HUNT', CX, 330, 30, '#fff', 'center');
       }
-      L(ctx, 'SHOOT BUCKS ●  NEVER SHOOT DOES ●  R-CLICK / SPACE TO RELOAD', 480, 508, 14, '#e8f0e8', 'center');
+      L(ctx, 'SHOOT BUCKS ●  NEVER SHOOT DOES ●  LEAD YOUR SHOTS', CX, 508, 14, '#e8f0e8', 'center');
 
       const best = DH.highscores.load()[0];
-      if (best) L(ctx, `TOP SCORE  ${best.initials}  ${fmtScore(best.score)}`, 480, 480, 16, '#ffd94d', 'center');
+      if (best) L(ctx, `TOP SCORE  ${best.initials}  ${fmtScore(best.score)}`, CX, 480, 16, '#ffd94d', 'center');
       DH.hud.drawMute(ctx);
     },
     onClick(x, y) {
@@ -122,11 +124,10 @@ DH.screens = (() => {
   };
 
   // ---------- TREK SELECT ----------
-  const CARDS = [
-    { x: 40, y: 130, w: 272, h: 330 },
-    { x: 344, y: 130, w: 272, h: 330 },
-    { x: 648, y: 130, w: 272, h: 330 },
-  ];
+  function cards() {
+    const w = 272, h = 330, gap = 32, y = 130;
+    return [-1, 0, 1].map((i) => ({ x: DH.CX + i * (w + gap) - w / 2, y, w, h }));
+  }
   let previews = null;
   let selT = 0;
 
@@ -141,13 +142,14 @@ DH.screens = (() => {
     },
     update(dt) { selT += dt; },
     render(ctx) {
-      ctx.fillStyle = '#0d1a12';
-      ctx.fillRect(0, 0, 960, 540);
-      L(ctx, 'CHOOSE YOUR HUNT', 480, 62, 40, '#ffd94d', 'center');
-      L(ctx, `SCORE  ${fmtScore(DH.G.score)}`, 480, 92, 17, '#e8f0e8', 'center');
+      const CX = DH.CX;
+      fill(ctx);
+      L(ctx, 'CHOOSE YOUR HUNT', CX, 62, 40, '#ffd94d', 'center');
+      L(ctx, `SCORE  ${fmtScore(DH.G.score)}`, CX, 92, 17, '#e8f0e8', 'center');
 
+      const CS = cards();
       DH.data.treks.forEach((tk, i) => {
-        const c = CARDS[i];
+        const c = CS[i];
         const done = DH.G.completed[tk.id] != null;
         const hov = !done && hitCard(DH.input.mouse.x, DH.input.mouse.y) === i;
         ctx.save();
@@ -164,13 +166,13 @@ DH.screens = (() => {
         rr(ctx, c.x + 10, c.y + 10, c.w - 20, 150, 8);
         ctx.clip();
         ctx.translate(c.x + 10, c.y + 10);
-        ctx.scale((c.w - 20) / 960, 150 / 540);
+        ctx.scale((c.w - 20) / DH.W, 150 / 540);
         previews[i].render(ctx, 0, selT);
-        DH.assets.draw(ctx, `${tk.species}_buck_walk_0`, 500, 470, {
+        DH.assets.draw(ctx, `${tk.species}_buck_walk_0`, DH.CX + 20, 470, {
           scale: DH.data.species[tk.species].bodyScale * 1.1, dir: -1, trophy: 4,
         });
         previews[i].renderFront(ctx, 0);
-        if (done) { ctx.fillStyle = 'rgba(10,14,10,0.55)'; ctx.fillRect(0, 0, 960, 540); }
+        if (done) { ctx.fillStyle = 'rgba(10,14,10,0.55)'; ctx.fillRect(0, 0, DH.W, 540); }
         ctx.restore();
 
         L(ctx, tk.name, c.x + c.w / 2, c.y + 205, 24, done ? '#8a9a88' : '#f2ead0', 'center');
@@ -186,7 +188,7 @@ DH.screens = (() => {
         }
         ctx.restore();
       });
-      L(ctx, 'COMPLETE ALL THREE TREKS FOR YOUR FINAL SCORE', 480, 512, 14, '#9ab59a', 'center');
+      L(ctx, 'COMPLETE ALL THREE TREKS FOR YOUR FINAL SCORE', CX, 512, 14, '#9ab59a', 'center');
       DH.hud.drawMute(ctx);
     },
     onClick(x, y) {
@@ -204,8 +206,9 @@ DH.screens = (() => {
   };
 
   function hitCard(x, y) {
-    for (let i = 0; i < CARDS.length; i++) {
-      const c = CARDS[i];
+    const CS = cards();
+    for (let i = 0; i < CS.length; i++) {
+      const c = CS[i];
       if (x >= c.x && x <= c.x + c.w && y >= c.y && y <= c.y + c.h) return i;
     }
     return null;
@@ -213,11 +216,12 @@ DH.screens = (() => {
 
   // ---------- SITE INTRO ----------
   const TIPS = [
+    'BULLETS TAKE TIME TO FLY — LEAD MOVING TARGETS',
     'FAR TARGETS SCORE 1.5× — RUNNING BUCKS 1.5×',
     'BIGGER ANTLERS = BIGGER TROPHY = MORE POINTS',
     'GUNSHOTS SPOOK THE HERD — MAKE THE FIRST SHOT COUNT',
     'HEAD SHOTS PAY 1.5× — AIM TRUE',
-    'RELOAD EARLY: R-CLICK OR SPACE',
+    'RELOAD EARLY — TAP THE BUTTON, R-CLICK, OR SPACE',
     "SHOOT A DOE AND THE SITE'S OVER — WATCH FOR ANTLERS",
   ];
   let introT = 0;
@@ -229,18 +233,18 @@ DH.screens = (() => {
       if (introT >= 1.8) DH.setState('HUNTING');
     },
     render(ctx) {
+      const CX = DH.CX;
       const trek = DH.data.treks[DH.G.trekIndex];
-      ctx.fillStyle = '#0d1a12';
-      ctx.fillRect(0, 0, 960, 540);
+      fill(ctx);
       const pop = easeOutBack(Math.min(1, introT * 2.4));
       ctx.save();
-      ctx.translate(480, 250);
+      ctx.translate(CX, 250);
       ctx.scale(pop, pop);
       L(ctx, trek.name, 0, -50, 30, '#cfe3cf', 'center');
       L(ctx, `SITE ${DH.G.siteIndex + 1} OF ${trek.sites.length}`, 0, 10, 52, '#ffd94d', 'center');
       ctx.restore();
-      L(ctx, TIPS[(DH.G.siteIndex + DH.G.trekIndex * 5) % TIPS.length], 480, 380, 16, '#e8f0e8', 'center');
-      L(ctx, 'GET READY...', 480, 440, 18, '#fff', 'center');
+      L(ctx, TIPS[(DH.G.siteIndex + DH.G.trekIndex * 5) % TIPS.length], CX, 380, 16, '#e8f0e8', 'center');
+      L(ctx, 'GET READY...', CX, 440, 18, '#fff', 'center');
     },
     onClick() { DH.setState('HUNTING'); },
   };
@@ -255,35 +259,35 @@ DH.screens = (() => {
       if (resT >= 5) advanceAfterSite();
     },
     render(ctx) {
-      ctx.fillStyle = '#0d1a12';
-      ctx.fillRect(0, 0, 960, 540);
-      panel(ctx, 230, 46, 500, 448);
-      L(ctx, rec.doeHit ? 'SITE OVER!' : `SITE ${rec.siteIndex + 1} RESULTS`, 480, 96, 32,
+      const CX = DH.CX;
+      fill(ctx);
+      panel(ctx, CX - 250, 46, 500, 448);
+      L(ctx, rec.doeHit ? 'SITE OVER!' : `SITE ${rec.siteIndex + 1} RESULTS`, CX, 96, 32,
         rec.doeHit ? '#ff5a4a' : '#ffd94d', 'center');
       let y = 146;
       const spName = DH.data.species[DH.data.treks[DH.G.trekIndex].species].name;
       if (rec.kills.length === 0) {
-        L(ctx, 'NO BUCKS TAKEN', 480, y + 10, 18, '#9ab59a', 'center');
+        L(ctx, 'NO BUCKS TAKEN', CX, y + 10, 18, '#9ab59a', 'center');
         y += 44;
       }
       for (const k of rec.kills) {
-        L(ctx, spName, 280, y, 16, '#f2ead0');
-        stars(ctx, 420, y, k.trophy, 15);
-        L(ctx, k.part.toUpperCase() + (k.running ? ' · RUNNING' : ''), 545, y, 12, '#9ab59a');
-        L(ctx, '+' + fmtScore(k.points), 680, y, 16, '#ffd94d');
+        L(ctx, spName, CX - 200, y, 16, '#f2ead0');
+        stars(ctx, CX - 60, y, k.trophy, 15);
+        L(ctx, k.part.toUpperCase() + (k.running ? ' · RUNNING' : ''), CX + 65, y, 12, '#9ab59a');
+        L(ctx, '+' + fmtScore(k.points), CX + 200, y, 16, '#ffd94d');
         y += 34;
       }
       y += 8;
       L(ctx, `SHOTS ${rec.shots} · HITS ${rec.hits} · ACCURACY ${Math.round(rec.accuracy * 100)}%`,
-        480, y, 15, '#cfe3cf', 'center');
+        CX, y, 15, '#cfe3cf', 'center');
       y += 32;
-      if (rec.accBonus) { L(ctx, 'ACCURACY BONUS', 300, y, 15, '#e8f0e8'); L(ctx, '+' + fmtScore(rec.accBonus), 650, y, 15, '#ffd94d'); y += 28; }
-      if (rec.threeBuckBonus) { L(ctx, 'THREE BUCK BONUS', 300, y, 15, '#e8f0e8'); L(ctx, '+' + fmtScore(rec.threeBuckBonus), 650, y, 15, '#ffd94d'); y += 28; }
-      if (rec.doeHit) { L(ctx, 'DOE PENALTY', 300, y, 15, '#ff5a4a'); L(ctx, fmtScore(rec.penalty), 650, y, 15, '#ff5a4a'); y += 28; }
+      if (rec.accBonus) { L(ctx, 'ACCURACY BONUS', CX - 180, y, 15, '#e8f0e8'); L(ctx, '+' + fmtScore(rec.accBonus), CX + 170, y, 15, '#ffd94d'); y += 28; }
+      if (rec.threeBuckBonus) { L(ctx, 'THREE BUCK BONUS', CX - 180, y, 15, '#e8f0e8'); L(ctx, '+' + fmtScore(rec.threeBuckBonus), CX + 170, y, 15, '#ffd94d'); y += 28; }
+      if (rec.doeHit) { L(ctx, 'DOE PENALTY', CX - 180, y, 15, '#ff5a4a'); L(ctx, fmtScore(rec.penalty), CX + 170, y, 15, '#ff5a4a'); y += 28; }
       const siteTotal = rec.kills.reduce((s, k) => s + k.points, 0) + rec.accBonus + rec.threeBuckBonus + rec.penalty;
-      L(ctx, 'SITE TOTAL', 300, y + 8, 18, '#f2ead0');
-      L(ctx, (siteTotal >= 0 ? '+' : '') + fmtScore(siteTotal), 650, y + 8, 18, siteTotal >= 0 ? '#ffd94d' : '#ff5a4a');
-      L(ctx, 'CLICK TO CONTINUE', 480, 470, 14, '#fff', 'center');
+      L(ctx, 'SITE TOTAL', CX - 180, y + 8, 18, '#f2ead0');
+      L(ctx, (siteTotal >= 0 ? '+' : '') + fmtScore(siteTotal), CX + 170, y + 8, 18, siteTotal >= 0 ? '#ffd94d' : '#ff5a4a');
+      L(ctx, 'TAP TO CONTINUE', CX, 470, 14, '#fff', 'center');
       DH.hud.draw(ctx, {});
     },
     onClick(x, y) {
@@ -319,19 +323,19 @@ DH.screens = (() => {
       if (resT >= 5) DH.setState('BONUS');
     },
     render(ctx) {
+      const CX = DH.CX;
       const trek = DH.data.treks[DH.G.trekIndex];
-      ctx.fillStyle = '#0d1a12';
-      ctx.fillRect(0, 0, 960, 540);
-      panel(ctx, 250, 60, 460, 420);
-      L(ctx, trek.name, 480, 112, 28, '#cfe3cf', 'center');
-      L(ctx, 'TREK COMPLETE!', 480, 152, 34, '#ffd94d', 'center');
-      L(ctx, `BUCKS TAKEN   ${trekSummary.bucks} / 15`, 480, 220, 20, '#f2ead0', 'center');
+      fill(ctx);
+      panel(ctx, CX - 230, 60, 460, 420);
+      L(ctx, trek.name, CX, 112, 28, '#cfe3cf', 'center');
+      L(ctx, 'TREK COMPLETE!', CX, 152, 34, '#ffd94d', 'center');
+      L(ctx, `BUCKS TAKEN   ${trekSummary.bucks} / 15`, CX, 220, 20, '#f2ead0', 'center');
       L(ctx, `ACCURACY   ${trekSummary.shots ? Math.round((trekSummary.hits / trekSummary.shots) * 100) : 0}%`,
-        480, 256, 20, '#f2ead0', 'center');
-      if (trekSummary.perfect) L(ctx, `PERFECT TREK  +${fmtScore(trekSummary.perfect)}`, 480, 300, 20, '#7ac96b', 'center');
-      L(ctx, 'TREK POINTS', 480, 360, 18, '#cfe3cf', 'center');
-      L(ctx, fmtScore(trekSummary.points), 480, 398, 34, '#ffd94d', 'center');
-      L(ctx, 'BONUS ROUND UP NEXT — CLICK!', 480, 452, 16, '#fff', 'center');
+        CX, 256, 20, '#f2ead0', 'center');
+      if (trekSummary.perfect) L(ctx, `PERFECT TREK  +${fmtScore(trekSummary.perfect)}`, CX, 300, 20, '#7ac96b', 'center');
+      L(ctx, 'TREK POINTS', CX, 360, 18, '#cfe3cf', 'center');
+      L(ctx, fmtScore(trekSummary.points), CX, 398, 34, '#ffd94d', 'center');
+      L(ctx, 'BONUS ROUND UP NEXT — TAP!', CX, 452, 16, '#fff', 'center');
       DH.hud.draw(ctx, {});
     },
     onClick(x, y) {
@@ -350,14 +354,14 @@ DH.screens = (() => {
       if (resT >= 4) completeTrek();
     },
     render(ctx) {
-      ctx.fillStyle = '#0d1a12';
-      ctx.fillRect(0, 0, 960, 540);
-      panel(ctx, 270, 100, 420, 330);
-      L(ctx, 'DUCK FLUSH', 480, 152, 30, '#ffd94d', 'center');
-      L(ctx, `DUCKS  ${bonusRec.hits} / ${bonusRec.total}`, 480, 216, 22, '#f2ead0', 'center');
-      L(ctx, `+${fmtScore(bonusRec.points)}`, 480, 258, 24, '#ffd94d', 'center');
-      if (bonusRec.allBonus) L(ctx, `FULL FLUSH BONUS  +${fmtScore(bonusRec.allBonus)}`, 480, 300, 18, '#7ac96b', 'center');
-      L(ctx, 'CLICK TO CONTINUE', 480, 396, 15, '#fff', 'center');
+      const CX = DH.CX;
+      fill(ctx);
+      panel(ctx, CX - 210, 100, 420, 330);
+      L(ctx, 'DUCK FLUSH', CX, 152, 30, '#ffd94d', 'center');
+      L(ctx, `DUCKS  ${bonusRec.hits} / ${bonusRec.total}`, CX, 216, 22, '#f2ead0', 'center');
+      L(ctx, `+${fmtScore(bonusRec.points)}`, CX, 258, 24, '#ffd94d', 'center');
+      if (bonusRec.allBonus) L(ctx, `FULL FLUSH BONUS  +${fmtScore(bonusRec.allBonus)}`, CX, 300, 18, '#7ac96b', 'center');
+      L(ctx, 'TAP TO CONTINUE', CX, 396, 15, '#fff', 'center');
       DH.hud.draw(ctx, {});
     },
     onClick(x, y) {
@@ -377,19 +381,19 @@ DH.screens = (() => {
     enter() { resT = 0; DH.audio.play('fanfare'); },
     update(dt) { resT += dt; },
     render(ctx) {
-      ctx.fillStyle = '#0d1a12';
-      ctx.fillRect(0, 0, 960, 540);
-      panel(ctx, 230, 50, 500, 440);
-      L(ctx, 'HUNT COMPLETE!', 480, 110, 38, '#ffd94d', 'center');
+      const CX = DH.CX;
+      fill(ctx);
+      panel(ctx, CX - 250, 50, 500, 440);
+      L(ctx, 'HUNT COMPLETE!', CX, 110, 38, '#ffd94d', 'center');
       let y = 170;
       for (const tk of DH.data.treks) {
-        L(ctx, tk.name, 300, y, 16, '#f2ead0');
-        L(ctx, '+' + fmtScore(DH.G.completed[tk.id] || 0), 660, y, 16, '#ffd94d');
+        L(ctx, tk.name, CX - 180, y, 16, '#f2ead0');
+        L(ctx, '+' + fmtScore(DH.G.completed[tk.id] || 0), CX + 180, y, 16, '#ffd94d', 'right');
         y += 34;
       }
-      L(ctx, 'FINAL SCORE', 480, y + 34, 20, '#cfe3cf', 'center');
-      L(ctx, fmtScore(DH.G.score), 480, y + 82, 46, '#ffd94d', 'center');
-      L(ctx, 'CLICK TO CONTINUE', 480, 460, 15, '#fff', 'center');
+      L(ctx, 'FINAL SCORE', CX, y + 34, 20, '#cfe3cf', 'center');
+      L(ctx, fmtScore(DH.G.score), CX, y + 82, 46, '#ffd94d', 'center');
+      L(ctx, 'TAP TO CONTINUE', CX, 460, 15, '#fff', 'center');
     },
     onClick() {
       if (DH.highscores.qualifies(DH.G.score)) DH.setState('HISCORE_ENTRY');
@@ -410,14 +414,14 @@ DH.screens = (() => {
     enter() { initials = [0, 0, 0]; slot = 0; resT = 0; },
     update(dt) { resT += dt; },
     render(ctx) {
-      ctx.fillStyle = '#0d1a12';
-      ctx.fillRect(0, 0, 960, 540);
-      panel(ctx, 280, 80, 400, 380);
-      L(ctx, 'NEW HIGH SCORE!', 480, 136, 30, '#ffd94d', 'center');
-      L(ctx, fmtScore(DH.G.score), 480, 178, 26, '#f2ead0', 'center');
-      L(ctx, 'ENTER YOUR INITIALS', 480, 218, 14, '#cfe3cf', 'center');
+      const CX = DH.CX;
+      fill(ctx);
+      panel(ctx, CX - 200, 80, 400, 380);
+      L(ctx, 'NEW HIGH SCORE!', CX, 136, 30, '#ffd94d', 'center');
+      L(ctx, fmtScore(DH.G.score), CX, 178, 26, '#f2ead0', 'center');
+      L(ctx, 'ENTER YOUR INITIALS', CX, 218, 14, '#cfe3cf', 'center');
       for (let i = 0; i < 3; i++) {
-        const x = 400 + i * 80;
+        const x = CX - 80 + i * 80;
         const active = i === slot && Math.floor(resT * 2.4) % 2 === 0;
         rr(ctx, x - 28, 240, 56, 76, 8);
         ctx.fillStyle = i === slot ? '#1e3a26' : '#152a1b';
@@ -429,25 +433,26 @@ DH.screens = (() => {
         L(ctx, '▲', x, 236, 16, '#ffd94d', 'center');
         L(ctx, '▼', x, 338, 16, '#ffd94d', 'center');
       }
-      rr(ctx, 420, 372, 120, 44, 8);
+      rr(ctx, CX - 60, 372, 120, 44, 8);
       ctx.fillStyle = '#2c5232';
       ctx.fill();
       ctx.lineWidth = 2.5;
       ctx.strokeStyle = '#7ac96b';
       ctx.stroke();
-      L(ctx, 'OK', 480, 402, 22, '#fff', 'center');
-      L(ctx, 'ARROWS / CLICK · ENTER TO CONFIRM', 480, 442, 12, '#9ab59a', 'center');
+      L(ctx, 'OK', CX, 402, 22, '#fff', 'center');
+      L(ctx, 'TAP ▲▼ / ARROWS · OK OR ENTER TO CONFIRM', CX, 442, 12, '#9ab59a', 'center');
     },
     onClick(x, y) {
+      const CX = DH.CX;
       for (let i = 0; i < 3; i++) {
-        const cx = 400 + i * 80;
-        if (x > cx - 30 && x < cx + 30) {
-          if (y > 218 && y < 258) { slot = i; bump(1); return; }
-          if (y > 320 && y < 352) { slot = i; bump(-1); return; }
+        const cx = CX - 80 + i * 80;
+        if (x > cx - 32 && x < cx + 32) {
+          if (y > 214 && y < 258) { slot = i; bump(1); return; }
+          if (y > 320 && y < 356) { slot = i; bump(-1); return; }
           if (y >= 258 && y <= 320) { slot = i; DH.audio.play('ui'); return; }
         }
       }
-      if (x > 420 && x < 540 && y > 372 && y < 416) confirmInitials();
+      if (x > CX - 60 && x < CX + 60 && y > 372 && y < 416) confirmInitials();
     },
     onKey(k) {
       if (k === 'ArrowUp') bump(1);
@@ -476,19 +481,19 @@ DH.screens = (() => {
       if (resT > 12) DH.setState('TITLE');
     },
     render(ctx) {
-      ctx.fillStyle = '#0d1a12';
-      ctx.fillRect(0, 0, 960, 540);
-      panel(ctx, 280, 40, 400, 460);
-      L(ctx, 'TROPHY ROOM', 480, 92, 30, '#ffd94d', 'center');
+      const CX = DH.CX;
+      fill(ctx);
+      panel(ctx, CX - 200, 40, 400, 460);
+      L(ctx, 'TROPHY ROOM', CX, 92, 30, '#ffd94d', 'center');
       const list = DH.highscores.load();
-      if (!list.length) L(ctx, 'NO SCORES YET — GO HUNT!', 480, 260, 16, '#9ab59a', 'center');
+      if (!list.length) L(ctx, 'NO SCORES YET — GO HUNT!', CX, 260, 16, '#9ab59a', 'center');
       list.slice(0, 10).forEach((e, i) => {
         const y = 136 + i * 32;
-        L(ctx, `${i + 1}.`, 320, y, 16, '#cfe3cf');
-        L(ctx, e.initials, 380, y, 16, '#f2ead0');
-        L(ctx, fmtScore(e.score), 640, y, 16, '#ffd94d', 'right');
+        L(ctx, `${i + 1}.`, CX - 160, y, 16, '#cfe3cf');
+        L(ctx, e.initials, CX - 100, y, 16, '#f2ead0');
+        L(ctx, fmtScore(e.score), CX + 160, y, 16, '#ffd94d', 'right');
       });
-      L(ctx, 'CLICK FOR TITLE', 480, 478, 14, '#fff', 'center');
+      L(ctx, 'TAP FOR TITLE', CX, 478, 14, '#fff', 'center');
     },
     onClick() { DH.setState('TITLE'); },
     onKey(k) { if (k === 'Enter' || k === 'Escape') DH.setState('TITLE'); },

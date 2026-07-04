@@ -15,8 +15,11 @@ python3 -m http.server 8000
 
 ## How to play
 
-- **Aim** with the mouse, **click** to shoot.
-- **Reload** with **right-click** or **Space** (3 shells per pump).
+- **Aim** with the mouse, **click** to shoot. On phones, **tap** to shoot
+  (play in landscape — the game fills the screen).
+- **Bullets take time to fly** — lead moving targets, Oregon Trail style.
+- **Reload** with the on-screen **⟳ RELOAD** button, **right-click**, or
+  **Space** (3 shells per pump).
 - Shoot the **bucks** (antlers!). **Never shoot the does** — a doe ends the
   site immediately and costs 1,000 points.
 - **M** or the speaker icon toggles sound.

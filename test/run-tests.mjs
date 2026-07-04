@@ -38,6 +38,18 @@ async function newPage(url) {
 const D = (page, fn, ...args) =>
   page.evaluate(([f, a]) => window.__DH[f](...a), [fn, args]);
 
+// Bullets travel, so aim ahead of the target: predict its position after the
+// bullet's flight time and shoot there. Returns the flight time to warp past.
+async function leadClick(page, tgt) {
+  return page.evaluate(([x, y, vx, vy]) => {
+    const t0 = window.__DH.flightTime(x, y);
+    const ax = x + vx * t0, ay = y + vy * t0;
+    const t = window.__DH.flightTime(ax, ay);
+    window.__DH.click(ax, ay);
+    return t;
+  }, [tgt.x, tgt.y, tgt.vx || 0, tgt.vy || 0]);
+}
+
 // scripted player: clears the current HUNTING site by shooting every buck
 async function playSite(page) {
   let guard = 0;
@@ -50,8 +62,8 @@ async function playSite(page) {
     }));
     if (buck) {
       if (shells === 0) { await D(page, 'rclick'); await D(page, 'warp', 0.6); }
-      await D(page, 'click', buck.x, buck.y);
-      await D(page, 'warp', 0.2);
+      const t = await leadClick(page, buck);
+      await D(page, 'warp', t + 0.15);
     } else {
       await D(page, 'warp', 0.5);
     }
@@ -70,8 +82,8 @@ async function playBonus(page) {
     }));
     if (duck) {
       if (shells === 0) { await D(page, 'rclick'); await D(page, 'warp', 0.6); }
-      await D(page, 'click', duck.x, duck.y);
-      await D(page, 'warp', 0.18);
+      const t = await leadClick(page, duck);
+      await D(page, 'warp', t + 0.12);
     } else {
       await D(page, 'warp', 0.4);
     }
@@ -125,15 +137,18 @@ async function main() {
     await p.screenshot({ path: `${SHOTS}/03-hunting-forest.png` });
     ok('forest scene renders content', (await canvasHasContent(p)) > 5);
 
-    // 3 — kill a buck
+    // 3 — kill a buck (bullets travel: the shot must be led and take time)
     const buck = (await D(p, 'animals')).find((a) => a.role === 'buck' && a.onScreen);
     ok('a buck is on screen', !!buck);
-    await D(p, 'click', buck.x, buck.y);
+    const scorePreKill = await D(p, 'score');
+    const flight = await leadClick(p, buck);
+    ok('shell consumed at trigger pull', (await D(p, 'shells')) === 2);
+    ok('no score before the bullet lands', (await D(p, 'score')) === scorePreKill);
+    await D(p, 'warp', flight + 0.1);
     const killed = (await D(p, 'animals')).find((a) => a.role === 'buck');
-    ok('buck dies when shot in the vitals', killed && killed.state === 'dying', JSON.stringify(killed));
-    ok('kill scores points', (await D(p, 'score')) > 0);
-    ok('shell consumed', (await D(p, 'shells')) === 2);
-    await D(p, 'warp', 0.25);
+    ok('led shot drops the buck at impact', killed && killed.state === 'dying', JSON.stringify(killed));
+    ok('kill scores points', (await D(p, 'score')) > scorePreKill);
+    await D(p, 'warp', 0.15);
     await p.screenshot({ path: `${SHOTS}/04-kill.png` });
 
     // 4 — empty gun + both reload paths
@@ -148,17 +163,43 @@ async function main() {
     await D(p, 'warp', 0.2); await D(p, 'click', 100, 80);
     await D(p, 'key', ' '); await D(p, 'warp', 0.6);
     ok('space also reloads', (await D(p, 'shells')) === 3);
+    // on-screen reload button (the mobile path)
+    await D(p, 'warp', 0.2); await D(p, 'click', 100, 80);
+    ok('spent a shell for the button test', (await D(p, 'shells')) === 2);
+    await D(p, 'click', 100, 505);            // tap the RELOAD button
+    ok('tap on reload button does not fire', (await D(p, 'shells')) === 2);
+    await D(p, 'warp', 0.6);
+    ok('reload button refills shells', (await D(p, 'shells')) === 3);
 
     // 5 — doe penalty ends the site
     await D(p, 'forceSpawn', 'doe');
     await D(p, 'warp', 1.5);
     const doe = (await D(p, 'animals')).find((a) => a.role === 'doe');
     const s0 = await D(p, 'score');
-    await D(p, 'click', doe.x, doe.y);
+    const doeFlight = await leadClick(p, doe);
+    await D(p, 'warp', doeFlight + 0.1);
     ok('doe hit costs 1000', (await D(p, 'score')) === s0 - 1000);
     await D(p, 'warp', 2);
     ok('doe hit ends the site', (await D(p, 'state')) === 'SITE_RESULTS');
     await p.screenshot({ path: `${SHOTS}/05-site-over.png` });
+    await p.close();
+  }
+
+  // 5b — wide-canvas mode (phone landscape): layout fills and stays composed
+  {
+    const p = await newPage(HTTP + '&w=1176');
+    await D(p, 'warp', 1);
+    ok('wide canvas boots to TITLE', (await D(p, 'state')) === 'TITLE');
+    await D(p, 'click', 588, 300);
+    ok('wide canvas: title → TREK_SELECT', (await D(p, 'state')) === 'TREK_SELECT');
+    await D(p, 'click', 284, 290);            // forest card, recentered for w=1176
+    await D(p, 'warp', 2);
+    ok('wide canvas: card click starts hunt', (await D(p, 'state')) === 'HUNTING');
+    await D(p, 'warp', 3.5);
+    ok('wide scene renders content', (await canvasHasContent(p)) > 5);
+    ok('no page errors in wide mode', p.errors.length === 0, p.errors.join(' | '));
+    await p.setViewportSize({ width: 1176, height: 540 });
+    await p.screenshot({ path: `${SHOTS}/11-wide-landscape.png` });
     await p.close();
   }
 
