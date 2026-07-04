@@ -27,7 +27,25 @@ const LAYERS = [
     patch: { x: 905, y: 455, w: 60, h: 60, fromX: 835 } },
   { name: 'trophy_bg', file: 'trophy_bg.png', key: false, q: 0.8,
     patch: { x: 908, y: 458, w: 55, h: 55, fromX: 848 } },
+  // Elk Summit (env 'mountain')
+  { name: 'mountain_sky',    file: 'mountain_sky.png',    key: false, q: 0.82,
+    patch: { x: 895, y: 445, w: 80, h: 75, fromX: 790 } },
+  { name: 'mountain_far',    file: 'mountain_far.png',    key: true,  q: 0.82 },
+  { name: 'mountain_mid',    file: 'mountain_mid.png',    key: true,  q: 0.85 },
+  { name: 'mountain_ground', file: 'mountain_ground.png', key: false, q: 0.85,
+    patch: { x: 895, y: 440, w: 85, h: 80, fromX: 780 } },
+  { name: 'mountain_front',  file: 'mountain_front.png',  key: true,  q: 0.82,
+    patch: { x: 900, y: 145, w: 70, h: 70, fromX: 800 },   // post-crop coords
+    cropY0: 300 },   // drop the tall pine tops so the rim stays a rim
 ];
+
+// 3-row × 2-column six-cell grid (for smoother 6-frame walk/run sheets)
+export const Q6 = [];
+for (let r = 0; r < 3; r++) {
+  for (let c = 0; c < 2; c++) {
+    Q6.push({ x0: c * 512 + 8, x1: (c + 1) * 512 - 8, y0: r * 341 + 8, y1: (r + 1) * 341 - 6 });
+  }
+}
 
 // Spritesheets: sliced into per-frame sprites sized to the game's registered
 // sprite boxes (deer box = 176×171, anchor bottom-center, facing right).
@@ -141,10 +159,11 @@ for (const L of LAYERS) {
   out[L.name] = await page.evaluate(async ([src, cfg]) => {
     const img = new Image();
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = src; });
+    const cropY0 = cfg.cropY0 || 0;
     const c = document.createElement('canvas');
-    c.width = img.naturalWidth; c.height = img.naturalHeight;
+    c.width = img.naturalWidth; c.height = img.naturalHeight - cropY0;
     const g = c.getContext('2d');
-    g.drawImage(img, 0, 0);
+    g.drawImage(img, 0, -cropY0);
 
     if (cfg.patch) {
       const p = cfg.patch;

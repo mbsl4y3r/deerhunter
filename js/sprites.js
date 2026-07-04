@@ -274,14 +274,14 @@ DH.sprites = (() => {
         const bw = role === 'monster' ? Math.round(w * 1.15) : w;
         const bh = role === 'monster' ? Math.round(h * 1.18) : h;
         const paintRole = role === 'monster' ? 'buck' : role;
-        for (let f = 0; f < 4; f++) {
+        // up to 6 frames per cycle (painted 2x3 sheets); procedural art
+        // repeats its 4 walk / 2 run poses for the extra slots
+        for (let f = 0; f < 6; f++) {
           A.register(`${spKey}_${role}_walk_${f}`, {
-            w: bw, h: bh, draw: (ctx, o) => quadruped(ctx, spKey, { role: paintRole, gait: 'walk', phase: f / 4, trophy: o.trophy }),
+            w: bw, h: bh, draw: (ctx, o) => quadruped(ctx, spKey, { role: paintRole, gait: 'walk', phase: (f % 4) / 4, trophy: o.trophy }),
           });
-        }
-        for (let f = 0; f < 2; f++) {
           A.register(`${spKey}_${role}_run_${f}`, {
-            w: bw, h: bh, draw: (ctx, o) => quadruped(ctx, spKey, { role: paintRole, gait: 'run', phase: f / 2, trophy: o.trophy }),
+            w: bw, h: bh, draw: (ctx, o) => quadruped(ctx, spKey, { role: paintRole, gait: 'run', phase: (f % 2) / 2, trophy: o.trophy }),
           });
         }
         A.register(`${spKey}_${role}_graze`, {

@@ -270,13 +270,14 @@ DH.background = (() => {
     far:    { par: 0.08, mode: 'band', srcY0: 140, srcY1: 432, dstY0: 55, dstY1: 333 },
     mid:    { par: 0.22, mode: 'tile', srcRow: 445, dstY: 340 },   // mirror-tiled half scale
     ground: { par: 0.5,  mode: 'anchor', srcRow: 0, dstY: 288 },
+    frontTiles: { mountain: 3 },       // per-env fringe density
   };
 
   // mirror every other tile so the seam edges always match; phase-shift the
   // start so the mirror seam doesn't sit at screen center
-  function drawMirrorTiled(ctx, img, x0, y, tw, th) {
+  function drawMirrorTiled(ctx, img, x0, y, tw, th, count) {
     x0 -= tw * 0.35;
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < (count || 4); i++) {
       if (i % 2) {
         ctx.save();
         ctx.translate(x0 + (i + 0.5) * tw, 0);
@@ -325,11 +326,12 @@ DH.background = (() => {
           ctx.drawImage(def.front, -M - camX, 0);
           return;
         }
-        // painted brush at half scale keeps the fringe a bottom rim
-        // instead of swallowing the near lane
-        const tw = Math.ceil((W + 2 * M) / 2);
+        // painted brush tiled small keeps the fringe a bottom rim instead
+        // of swallowing the near lane; tile count is per-environment
+        const tiles = (ART_LAYOUT.frontTiles && ART_LAYOUT.frontTiles[env]) || 2;
+        const tw = Math.ceil((W + 2 * M) / tiles);
         const s = tw / front.width;
-        drawMirrorTiled(ctx, front, -M - camX, 540 - front.height * s, tw, front.height * s);
+        drawMirrorTiled(ctx, front, -M - camX, 540 - front.height * s, tw, front.height * s, tiles + 2);
       },
     };
   }

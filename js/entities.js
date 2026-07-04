@@ -32,6 +32,10 @@ DH.entities = (() => {
         || (this.skin === 'monster' && this.def.hitboxesMonster)
         || this.def.hitboxes;
       this.hbScale = this.skin === 'monster' ? 1.15 : 1;
+      // painted 2x3 sheets bring 6-frame cycles; fall back to the classic
+      // 4-frame walk / 2-frame run when fewer override frames exist
+      this.walkN = this.overrideFrames('walk', 4);
+      this.runN = this.overrideFrames('run', 2);
       this.legPhase = DH.util.rand();
       this.stateT = 0;
       this.alpha = 1;
@@ -124,6 +128,16 @@ DH.entities = (() => {
       return { x: 0, y: 0 };
     }
 
+    overrideFrames(gait, fallback) {
+      let n = 0;
+      while (n < 6) {
+        const def = DH.assets.get(`${this.sp}_${this.skin}_${gait}_${n}`);
+        if (!def || !def.img) break;
+        n++;
+      }
+      return n >= 2 ? n : fallback;
+    }
+
     deathFrameCount() {
       let n = 0;
       while (n < 4) {
@@ -153,8 +167,8 @@ DH.entities = (() => {
     frameName() {
       const g = this.gait();
       if (g === 'graze') return `${this.sp}_${this.skin}_graze`;
-      if (g === 'run') return `${this.sp}_${this.skin}_run_${Math.floor(this.legPhase * 2) % 2}`;
-      return `${this.sp}_${this.skin}_walk_${Math.floor(this.legPhase * 4) % 4}`;
+      if (g === 'run') return `${this.sp}_${this.skin}_run_${Math.floor(this.legPhase * this.runN) % this.runN}`;
+      return `${this.sp}_${this.skin}_walk_${Math.floor(this.legPhase * this.walkN) % this.walkN}`;
     }
 
     draw(ctx) {
