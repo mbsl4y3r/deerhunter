@@ -311,6 +311,8 @@ DH.sprites = (() => {
       });
     }
     A.register('crosshair', { w: 48, h: 48, anchorY: 0.5, draw: crosshair });
+    // painted title sign (drawn only when override art exists)
+    A.register('logo', { w: 460, h: 190, anchorY: 0.5, draw: () => {} });
     A.register('shell', { w: 12, h: 24, anchorY: 0.5, draw: shellIcon });
     A.register('cartridge', { w: 10, h: 26, anchorY: 0.5, draw: cartridgeIcon });
   }

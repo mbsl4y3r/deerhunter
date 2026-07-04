@@ -146,11 +146,20 @@ DH.shop = (() => {
     },
     render(ctx) {
       const CX = DH.CX;
-      ctx.fillStyle = '#14100c';
-      ctx.fillRect(0, 0, DH.W, 540);
-      // plank backdrop
-      ctx.fillStyle = '#241a10';
-      for (let i = 0; i < 6; i++) ctx.fillRect(0, i * 90, DH.W, 86);
+      const bgImg = DH.artimg && DH.artimg.shop_bg;
+      if (bgImg) {
+        const s = Math.max(DH.W / bgImg.width, 540 / bgImg.height);
+        ctx.drawImage(bgImg, (DH.W - bgImg.width * s) / 2, (540 - bgImg.height * s) / 2,
+                      bgImg.width * s, bgImg.height * s);
+        ctx.fillStyle = 'rgba(12,9,5,0.6)';
+        ctx.fillRect(0, 0, DH.W, 540);
+      } else {
+        ctx.fillStyle = '#14100c';
+        ctx.fillRect(0, 0, DH.W, 540);
+        // plank backdrop
+        ctx.fillStyle = '#241a10';
+        for (let i = 0; i < 6; i++) ctx.fillRect(0, i * 90, DH.W, 86);
+      }
       L(ctx, 'BUCK & BARREL', CX, 52, 38, '#ffd94d', 'center');
       L(ctx, 'GUNSMITH & OUTFITTER', CX, 76, 14, '#cfa96b', 'center');
       L(ctx, `CASH  $${DH.util.fmtScore(DH.shop.cash)}`, CX + 355, 52, 20, '#7ac96b', 'right');

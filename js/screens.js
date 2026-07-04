@@ -103,11 +103,16 @@ DH.screens = (() => {
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, DH.W, 300);
 
-      logoAntler(ctx, CX - 195, 108, false);
-      logoAntler(ctx, CX + 195, 108, true);
-      L(ctx, 'DEER', CX, 105, 74, '#ffd94d', 'center');
-      L(ctx, 'HUNTER', CX, 168, 54, '#f2ead0', 'center');
-      L(ctx, 'A BIG BUCK ARCADE TRIBUTE', CX, 196, 15, '#cfe3cf', 'center');
+      if (DH.artimg && DH.artimg.logo) {
+        DH.assets.draw(ctx, 'logo', CX, 115);
+        L(ctx, 'A BIG BUCK ARCADE TRIBUTE', CX, 222, 15, '#cfe3cf', 'center');
+      } else {
+        logoAntler(ctx, CX - 195, 108, false);
+        logoAntler(ctx, CX + 195, 108, true);
+        L(ctx, 'DEER', CX, 105, 74, '#ffd94d', 'center');
+        L(ctx, 'HUNTER', CX, 168, 54, '#f2ead0', 'center');
+        L(ctx, 'A BIG BUCK ARCADE TRIBUTE', CX, 196, 15, '#cfe3cf', 'center');
+      }
 
       if (Math.floor(titleT * 1.6) % 2 === 0) {
         L(ctx, 'TAP OR CLICK TO HUNT', CX, 330, 30, '#fff', 'center');
@@ -509,7 +514,16 @@ DH.screens = (() => {
     },
     render(ctx) {
       const CX = DH.CX;
-      fill(ctx);
+      const bgImg = DH.artimg && DH.artimg.trophy_bg;
+      if (bgImg) {
+        const s = Math.max(DH.W / bgImg.width, 540 / bgImg.height);
+        ctx.drawImage(bgImg, (DH.W - bgImg.width * s) / 2, (540 - bgImg.height * s) / 2,
+                      bgImg.width * s, bgImg.height * s);
+        ctx.fillStyle = 'rgba(8,12,8,0.5)';
+        ctx.fillRect(0, 0, DH.W, 540);
+      } else {
+        fill(ctx);
+      }
       panel(ctx, CX - 200, 40, 400, 460);
       L(ctx, 'TROPHY ROOM', CX, 92, 30, '#ffd94d', 'center');
       const list = DH.highscores.load();

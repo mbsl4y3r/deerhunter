@@ -171,13 +171,7 @@ DH.hud = (() => {
 
   function muteHit(x, y) { return x > DH.HUDR - 44 && x < DH.HUDR + 8 && y > 56 && y < 96; }
 
-  function fsAvailable() {
-    const el = document.documentElement;
-    return !!(el.requestFullscreen || el.webkitRequestFullscreen);
-  }
-
   function drawFullscreen(ctx) {
-    if (!fsAvailable()) return;
     ctx.save();
     ctx.globalAlpha = 0.8;
     ctx.translate(DH.HUDR - 22, 116);
@@ -199,7 +193,7 @@ DH.hud = (() => {
   }
 
   function fsHit(x, y) {
-    return fsAvailable() && x > DH.HUDR - 44 && x < DH.HUDR + 8 && y > 98 && y < 136;
+    return x > DH.HUDR - 44 && x < DH.HUDR + 8 && y > 98 && y < 136;
   }
 
   function drawCrosshair(ctx) {

@@ -66,20 +66,41 @@ DH.main = (() => {
     else if (type === 'key' && cur.onKey) cur.onKey(a);
   }
 
+  let fsFallback = false;   // set when the API rejected; next tap pops out
+
+  function popOut() {
+    // escape the embedding page (artifact chrome) into a clean tab —
+    // must run inside the user gesture or the popup gets blocked
+    let w = null;
+    try { w = window.open(location.href, '_blank'); } catch (e) { /* blocked */ }
+    if (!w) DH.hud.banner('BLOCKED — USE "ADD TO HOME SCREEN"', '#ff8a7a', 2.4);
+  }
+
   function toggleFullscreen() {
     const doc = document;
     if (doc.fullscreenElement || doc.webkitFullscreenElement) {
       (doc.exitFullscreen || doc.webkitExitFullscreen).call(doc);
       return;
     }
+    let framed = true;
+    try { framed = window.self !== window.top; } catch (e) { /* cross-origin parent */ }
     const el = doc.documentElement;
     const req = el.requestFullscreen || el.webkitRequestFullscreen;
-    if (!req) return;
+    const enabled = doc.fullscreenEnabled === true || doc.webkitFullscreenEnabled === true;
+    if (fsFallback || !req || !enabled) {
+      if (framed) popOut();
+      else DH.hud.banner('FULLSCREEN NOT SUPPORTED HERE', '#ff8a7a', 2.0);
+      return;
+    }
     try {
       const p = req.call(el, { navigationUI: 'hide' });
-      if (p && p.catch) p.catch(() => DH.hud.banner('FULLSCREEN BLOCKED HERE', '#ff8a7a', 1.6));
+      if (p && p.catch) p.catch(() => {
+        fsFallback = true;
+        DH.hud.banner(framed ? 'BLOCKED — TAP AGAIN TO POP OUT' : 'FULLSCREEN BLOCKED', '#ff8a7a', 2.2);
+      });
     } catch (e) {
-      DH.hud.banner('FULLSCREEN BLOCKED HERE', '#ff8a7a', 1.6);
+      fsFallback = true;
+      DH.hud.banner(framed ? 'BLOCKED — TAP AGAIN TO POP OUT' : 'FULLSCREEN BLOCKED', '#ff8a7a', 2.2);
     }
   }
 
