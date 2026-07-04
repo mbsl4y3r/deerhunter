@@ -18,6 +18,9 @@ step, no runtime dependencies. See README.md for gameplay and structure.
   tuning lives in ART_LAYOUT in js/background.js.
 - Run `cd test && node run-tests.mjs` before pushing (Playwright headless via
   executablePath /opt/pw-browsers/chromium; playwright is installed in test/).
+- Bump `js/version.js` (vYYYY.MM.DD-N) in every push — the title screen shows
+  it and installed home-screen apps rely on it to confirm updates (sw.js is
+  network-first; users may need one app relaunch to fetch fresh builds).
 
 ## Design decisions (user-confirmed)
 

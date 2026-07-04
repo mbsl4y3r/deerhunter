@@ -121,6 +121,7 @@ DH.screens = (() => {
 
       const best = DH.highscores.load()[0];
       if (best) L(ctx, `TOP SCORE  ${best.initials}  ${fmtScore(best.score)}`, CX, 480, 16, '#ffd94d', 'center');
+      if (DH.BUILD) L(ctx, DH.BUILD, DH.HUDR - 6, 534, 9, 'rgba(255,255,255,0.4)', 'right');
       DH.hud.drawMute(ctx);
     },
     onClick(x, y) {
@@ -154,7 +155,17 @@ DH.screens = (() => {
     update(dt) { selT += dt; },
     render(ctx) {
       const CX = DH.CX;
-      fill(ctx);
+      const bgImg = DH.artimg && DH.artimg.select_bg;
+      if (bgImg) {
+        const s = Math.max(DH.W / bgImg.width, 540 / bgImg.height);
+        ctx.drawImage(bgImg, (DH.W - bgImg.width * s) / 2, (540 - bgImg.height * s) / 2,
+                      bgImg.width * s, bgImg.height * s);
+        ctx.fillStyle = 'rgba(8,12,8,0.5)';
+        ctx.fillRect(0, 0, DH.W, 540);
+      } else {
+        fill(ctx);
+      }
+      const framed = DH.assets.get('card_frame').img;
       L(ctx, 'CHOOSE YOUR HUNT', CX, 62, 40, '#ffd94d', 'center');
       L(ctx, `SCORE  ${fmtScore(DH.G.score)}`, CX - 90, 92, 17, '#e8f0e8', 'center');
       L(ctx, `CASH  $${fmtScore(DH.shop.cash)}`, CX + 110, 92, 17, '#7ac96b', 'center');
@@ -169,9 +180,11 @@ DH.screens = (() => {
         rr(ctx, c.x, c.y, c.w, c.h, 12);
         ctx.fillStyle = '#16261a';
         ctx.fill();
-        ctx.lineWidth = hov ? 4 : 2.5;
-        ctx.strokeStyle = done ? '#5a6b58' : hov ? '#ffe97a' : '#c9a54a';
-        ctx.stroke();
+        if (!framed) {
+          ctx.lineWidth = hov ? 4 : 2.5;
+          ctx.strokeStyle = done ? '#5a6b58' : hov ? '#ffe97a' : '#c9a54a';
+          ctx.stroke();
+        }
 
         // environment preview
         ctx.save();
@@ -195,19 +208,37 @@ DH.screens = (() => {
           L(ctx, '✓ COMPLETE', c.x + c.w / 2, c.y + 292, 20, '#7ac96b', 'center');
           L(ctx, `+${fmtScore(DH.G.completed[tk.id])}`, c.x + c.w / 2, c.y + 316, 16, '#ffd94d', 'center');
         } else {
-          L(ctx, hov ? '▶ START HUNT' : 'START HUNT', c.x + c.w / 2, c.y + 300, 18,
+          const btn = DH.assets.get('wood_btn').img;
+          if (btn) DH.assets.draw(ctx, 'wood_btn', c.x + c.w / 2, c.y + 296, { scale: hov ? 0.88 : 0.82 });
+          L(ctx, hov ? '▶ START HUNT' : 'START HUNT', c.x + c.w / 2, c.y + 302, 18,
             hov ? '#ffe97a' : '#ffd94d', 'center');
         }
+        // painted frame + species badge ride on top of the card edges
+        if (framed) {
+          DH.assets.draw(ctx, 'card_frame', c.x, c.y, {});
+          if (hov) {
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = 'rgba(255,233,122,0.8)';
+            rr(ctx, c.x + 2, c.y + 2, c.w - 4, c.h - 4, 12);
+            ctx.stroke();
+          }
+        }
+        const badge = DH.assets.get(`badge_${tk.species}`).img;
+        if (badge) DH.assets.draw(ctx, `badge_${tk.species}`, c.x + 40, c.y + 40, { scale: 0.95 });
         ctx.restore();
       });
       // gun shop entrance
       const sb = shopBtn();
-      DH.util.rr(ctx, sb.x, sb.y, sb.w, sb.h, 10);
-      ctx.fillStyle = '#2c2416';
-      ctx.fill();
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = '#c9a54a';
-      ctx.stroke();
+      if (DH.assets.get('wood_btn').img) {
+        DH.assets.draw(ctx, 'wood_btn', CX, sb.y + sb.h / 2, { scale: 0.92 });
+      } else {
+        DH.util.rr(ctx, sb.x, sb.y, sb.w, sb.h, 10);
+        ctx.fillStyle = '#2c2416';
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#c9a54a';
+        ctx.stroke();
+      }
       L(ctx, '🛒 GUN SHOP', CX, sb.y + 27, 17, '#ffd94d', 'center');
       L(ctx, 'COMPLETE ALL THREE TREKS FOR YOUR FINAL SCORE', CX, 516, 12, '#9ab59a', 'center');
       DH.hud.drawMute(ctx);

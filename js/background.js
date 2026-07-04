@@ -274,7 +274,8 @@ DH.background = (() => {
   };
 
   // mirror every other tile so the seam edges always match; phase-shift the
-  // start so the mirror seam doesn't sit at screen center
+  // start so the mirror seam doesn't sit at screen center. Tiles overlap by
+  // a pixel — fractional positions + smoothing otherwise leave hairline gaps.
   function drawMirrorTiled(ctx, img, x0, y, tw, th, count) {
     x0 -= tw * 0.35;
     for (let i = 0; i < (count || 4); i++) {
@@ -282,10 +283,10 @@ DH.background = (() => {
         ctx.save();
         ctx.translate(x0 + (i + 0.5) * tw, 0);
         ctx.scale(-1, 1);
-        ctx.drawImage(img, -tw / 2, y, tw, th);
+        ctx.drawImage(img, -tw / 2 - 1, y, tw + 2, th);
         ctx.restore();
       } else {
-        ctx.drawImage(img, x0 + i * tw, y, tw, th);
+        ctx.drawImage(img, x0 + i * tw - 1, y, tw + 2, th);
       }
     }
   }

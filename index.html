@@ -45,6 +45,7 @@
 <body>
 <canvas id="game" width="960" height="540"></canvas>
 <div id="rotate"><div class="inner"><span class="icon">📱↻</span>ROTATE YOUR PHONE<br><small style="font-weight:normal;font-size:14px">Deer Hunter plays in landscape</small></div></div>
+<script src="js/version.js"></script>
 <script src="js/util.js"></script>
 <script src="js/artdata.js"></script>
 <script src="js/data.js"></script>
@@ -62,5 +63,11 @@
 <script src="js/hud.js"></script>
 <script src="js/highscores.js"></script>
 <script src="js/main.js"></script>
+<script>
+  // installed home-screen apps update through the network-first worker
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  }
+</script>
 </body>
 </html>
