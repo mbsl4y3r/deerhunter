@@ -88,6 +88,29 @@ SHEETS.push(
     box: DBOX, fill: 0.62, fit: 'h', lineErase: false },
 );
 
+// Ducks, HUD ammo icons, and shop gun art. lineErase stays off everywhere:
+// cartoon outlines and long horizontal gun barrels look exactly like the
+// "baseline rule" the eraser hunts.
+SHEETS.push(
+  { file: 'duck_fly_sheet.png', boxes: Q,
+    names: ['duck_0', 'duck_1', 'duck_2', 'duck_3'],
+    box: { w: 64, h: 48 }, fill: 0.9, fit: 'h', lineErase: false },
+  { file: 'duck_fall.png', cells: 1, take: [0],
+    names: ['duck_fall'],
+    box: { w: 64, h: 48 }, fill: 0.9, fit: 'h', lineErase: false },
+  { file: 'cartridge_icon.png', cells: 1, take: [0],
+    names: ['cartridge'],
+    box: { w: 10, h: 26 }, fill: 0.95, fit: 'h', lineErase: false },
+  { file: 'shell_icon.png', cells: 1, take: [0],
+    names: ['shell'],
+    box: { w: 12, h: 24 }, fill: 0.95, fit: 'h', lineErase: false },
+);
+for (const id of ['pump12', 'lever30', 'win94', 'bolt700', 'auto5']) {
+  SHEETS.push({ file: `gun_${id}.png`, cells: 1, take: [0],
+    names: [`gun_${id}`],
+    box: { w: 96, h: 36 }, fill: 0.98, fit: 'w', lineErase: false });
+}
+
 const browser = await chromium.launch({ headless: true, executablePath: '/opt/pw-browsers/chromium' });
 const page = await browser.newPage();
 

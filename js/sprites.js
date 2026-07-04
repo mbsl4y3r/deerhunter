@@ -296,9 +296,18 @@ DH.sprites = (() => {
         }
       }
     }
+    for (let f = 0; f < 4; f++) {
+      A.register(`duck_${f}`, { w: 64, h: 48, anchorY: 0.5, draw: (ctx) => duck(ctx, { frame: f % 2 }) });
+    }
+    A.register('duck_fall', { w: 64, h: 48, anchorY: 0.5, draw: (ctx) => duck(ctx, { frame: 1 }) });
     for (let f = 0; f < 2; f++) {
-      A.register(`duck_${f}`, { w: 64, h: 48, anchorY: 0.5, draw: (ctx) => duck(ctx, { frame: f }) });
       A.register(`muzzle_${f}`, { w: 56, h: 56, anchorY: 0.5, draw: (ctx) => muzzleFlash(ctx, { frame: f }) });
+    }
+    for (const g of DH.data.guns) {
+      A.register(`gun_${g.id}`, {
+        w: 96, h: 36, anchorY: 0.5,
+        draw: (ctx) => DH.shop.drawGunIcon(ctx, g.style),
+      });
     }
     A.register('crosshair', { w: 48, h: 48, anchorY: 0.5, draw: crosshair });
     A.register('shell', { w: 12, h: 24, anchorY: 0.5, draw: shellIcon });

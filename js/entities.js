@@ -234,8 +234,19 @@ DH.entities = (() => {
     kill() { this.state = 'dying'; this.stateT = 0; }
 
     draw(ctx) {
-      const name = this.state === 'fly' ? `duck_${Math.floor(this.flap) % 2}` : 'duck_1';
-      DH.assets.draw(ctx, name, this.x, this.y, { dir: this.dir, rot: this.rot });
+      if (this.state === 'fly') {
+        // 4-frame flap when the painted cycle exists, 2-frame otherwise
+        const four = DH.assets.get('duck_2') && DH.assets.get('duck_2').img;
+        const name = `duck_${Math.floor(this.flap) % (four ? 4 : 2)}`;
+        DH.assets.draw(ctx, name, this.x, this.y, { dir: this.dir });
+      } else {
+        const fall = DH.assets.get('duck_fall');
+        if (fall && fall.img) {
+          DH.assets.draw(ctx, 'duck_fall', this.x, this.y, { dir: this.dir });
+        } else {
+          DH.assets.draw(ctx, 'duck_1', this.x, this.y, { dir: this.dir, rot: this.rot });
+        }
+      }
     }
 
     hitTest(px, py) {

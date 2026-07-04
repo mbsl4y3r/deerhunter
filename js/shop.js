@@ -71,6 +71,7 @@ DH.shop = (() => {
     bulletSpeed: () => gun().bullet * (has('barrel') ? 1.25 : 1),
     scoreMult: () => gun().scoreMult || 1,
     ammo: () => gun().ammo,
+    drawGunIcon: (ctx, style) => drawGun(ctx, style, 0, 0, 1),
     _reset: () => { S = defaults(); save(); },
   };
 
@@ -169,7 +170,7 @@ DH.shop = (() => {
         ctx.lineWidth = 2;
         ctx.strokeStyle = equipped ? '#7ac96b' : owned ? '#c9a54a' : afford ? '#8a7a55' : '#4a4238';
         ctx.stroke();
-        drawGun(ctx, g.style, r.x + 52, r.y + 28, 0.9);
+        DH.assets.draw(ctx, `gun_${g.id}`, r.x + 52, r.y + 28, { scale: 0.95 });
         L(ctx, g.name, r.x + 108, r.y + 22, 15, owned ? '#f2ead0' : afford ? '#e8dcc0' : '#8a8070');
         L(ctx, g.desc, r.x + 108, r.y + 38, 10, '#9a8f78');
         L(ctx, `CAP ${g.shells} · VEL ${g.bullet} · ROF ${Math.round(1 / g.cooldown)}/s`,
