@@ -22,6 +22,11 @@ const LAYERS = [
     patch: { x: 880, y: 445, w: 120, h: 80, fromX: 720 } },
   { name: 'forest_front',  file: 'forest_front.png',  key: true,  q: 0.82,
     patch: { x: 908, y: 458, w: 55, h: 60, fromX: 848 } },
+  // full-scene UI backdrops (drawn cover + dimmed behind menu panels)
+  { name: 'shop_bg',   file: 'shop_bg.png',   key: false, q: 0.8,
+    patch: { x: 905, y: 455, w: 60, h: 60, fromX: 835 } },
+  { name: 'trophy_bg', file: 'trophy_bg.png', key: false, q: 0.8,
+    patch: { x: 908, y: 458, w: 55, h: 55, fromX: 848 } },
 ];
 
 // Spritesheets: sliced into per-frame sprites sized to the game's registered
@@ -114,6 +119,12 @@ SHEETS.push(
   { file: 'logo.png', cells: 1, take: [0],
     names: ['logo'],
     box: { w: 460, h: 190 }, fill: 0.97, fit: 'w', lineErase: false },
+  { file: 'crosshair_icon.png', cells: 1, take: [0],
+    names: ['crosshair'],
+    box: { w: 48, h: 48 }, fill: 0.95, fit: 'h', lineErase: false },
+  { file: 'muzzle_sheet.png', cells: 2, take: [0, 1],
+    names: ['muzzle_0', 'muzzle_1'],
+    box: { w: 56, h: 56 }, fill: 0.95, fit: 'h', lineErase: false },
 );
 for (const id of ['pump12', 'lever30', 'win94', 'bolt700', 'auto5']) {
   SHEETS.push({ file: `gun_${id}.png`, cells: 1, take: [0],
