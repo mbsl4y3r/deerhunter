@@ -216,6 +216,28 @@ DH.sprites = (() => {
     ctx.beginPath(); ctx.arc(0, 0, 1.8, 0, Math.PI * 2); ctx.fill();
   }
 
+  // rustic plank button behind menu labels (PNG override may replace it)
+  function woodBtn(ctx) {
+    const g = ctx.createLinearGradient(0, -26, 0, 26);
+    g.addColorStop(0, '#6b4a2a');
+    g.addColorStop(0.5, '#54371e');
+    g.addColorStop(1, '#3a2513');
+    DH.util.rr(ctx, -110, -26, 220, 52, 12);
+    ctx.fillStyle = g; ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = '#241505'; ctx.stroke();
+    DH.util.rr(ctx, -104, -20, 208, 40, 9);
+    ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(214,168,110,0.4)'; ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,0.22)';
+    ctx.lineWidth = 1.2;
+    for (let i = 0; i < 5; i++) {
+      const y0 = -13 + (i % 3) * 9, x0 = -96 + i * 40;
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.bezierCurveTo(x0 + 12, y0 + 3, x0 + 22, y0 - 4, x0 + 34, y0 + 1);
+      ctx.stroke();
+    }
+  }
+
   function shellIcon(ctx) {
     DH.util.rr(ctx, -5, -16, 10, 22, 3);
     ctx.fillStyle = '#c8402e'; ctx.fill();
@@ -313,9 +335,10 @@ DH.sprites = (() => {
     A.register('crosshair', { w: 48, h: 48, anchorY: 0.5, draw: crosshair });
     // painted title sign (drawn only when override art exists)
     A.register('logo', { w: 460, h: 190, anchorY: 0.5, draw: () => {} });
-    // trek-select dressing (art-only, no procedural fallback)
-    A.register('card_frame', { w: 272, h: 330, anchorX: 0, anchorY: 0, draw: () => {} });
-    A.register('wood_btn', { w: 220, h: 52, anchorY: 0.5, draw: () => {} });
+    // trek-select dressing. The frame is drawn 20px past the card rect on
+    // every side so its thick beams straddle the card edges (art-only).
+    A.register('card_frame', { w: 312, h: 370, anchorX: 0, anchorY: 0, draw: () => {} });
+    A.register('wood_btn', { w: 220, h: 52, anchorY: 0.5, draw: woodBtn });
     for (const sp of ['deer', 'elk', 'moose']) {
       A.register(`badge_${sp}`, { w: 84, h: 84, anchorY: 0.5, draw: () => {} });
     }

@@ -25,6 +25,8 @@ const LAYERS = [
   // full-scene UI backdrops (drawn cover + dimmed behind menu panels)
   { name: 'shop_bg',   file: 'shop_bg.png',   key: false, q: 0.8,
     patch: { x: 905, y: 455, w: 60, h: 60, fromX: 835 } },
+  { name: 'select_bg', file: 'select_bg.png', key: false, q: 0.8,
+    patch: { x: 910, y: 458, w: 52, h: 55, fromX: 830 } },
   { name: 'trophy_bg', file: 'trophy_bg.png', key: false, q: 0.8,
     patch: { x: 908, y: 458, w: 55, h: 55, fromX: 848 } },
   // Elk Summit (env 'mountain')
@@ -184,6 +186,23 @@ SHEETS.push(
     box: EBOX, fill: 0.6, fit: 'h', lineErase: false },
 );
 
+// Trek-select dressing. The frame stretches non-uniformly to its box
+// (stretch: true) — it's border decor, the distortion is invisible on wood
+// beams. Its sparkle watermark sits over the bottom-right antler ornament,
+// so it gets inpainted (desparkle) instead of donor-patched. The badge
+// sparkles land on pure magenta and vanish in the chroma key.
+SHEETS.push(
+  { file: 'card_frame.png', boxes: [{ x0: 0, x1: 687, y0: 0, y1: 1024 }],
+    names: ['card_frame'], box: { w: 468, h: 555 }, stretch: true,
+    lineErase: false, desparkle: [554, 896, 622, 960] },
+  { file: 'badge_deer.png', boxes: [{ x0: 0, x1: 1024, y0: 0, y1: 1024 }],
+    names: ['badge_deer'], box: { w: 168, h: 168 }, fill: 0.98, fit: 'h', lineErase: false },
+  { file: 'badge_elk.png', boxes: [{ x0: 0, x1: 1024, y0: 0, y1: 1024 }],
+    names: ['badge_elk'], box: { w: 168, h: 168 }, fill: 0.98, fit: 'h', lineErase: false },
+  { file: 'badge_moose.png', boxes: [{ x0: 0, x1: 1024, y0: 0, y1: 1024 }],
+    names: ['badge_moose'], box: { w: 168, h: 168 }, fill: 0.98, fit: 'h', lineErase: false },
+);
+
 const browser = await chromium.launch({ headless: true, executablePath: '/opt/pw-browsers/chromium' });
 const page = await browser.newPage();
 
@@ -278,6 +297,50 @@ for (const S of SHEETS) {
           d[i] = Math.round(r - (r - gr) * 0.2);
         }
       }
+      // inpaint the generator's gray sparkle watermark where it overlaps
+      // real art: flag low-saturation bright pixels inside the given rect,
+      // dilate to catch the soft edge, then refill each column by lerping
+      // between the untouched colors above and below the flagged run
+      if (cfg.desparkle) {
+        const [rx0, ry0, rx1, ry1] = cfg.desparkle;
+        const flag = new Uint8Array(cw * ch);
+        for (let y = ry0; y <= ry1; y++) {
+          for (let x = rx0; x <= rx1; x++) {
+            const j = (y * cw + x) * 4;
+            const mx = Math.max(d[j], d[j + 1], d[j + 2]);
+            const mn = Math.min(d[j], d[j + 1], d[j + 2]);
+            // gray core, or brightened low-sat blend where it crosses the
+            // beige antler ornament
+            if (d[j + 3] > 20 && ((mx - mn < 30 && mx > 120) || (mx - mn < 52 && mx > 148))) flag[y * cw + x] = 1;
+          }
+        }
+        for (let it = 0; it < 2; it++) {
+          const f2 = flag.slice();
+          for (let y = ry0; y <= ry1; y++) {
+            for (let x = rx0; x <= rx1; x++) {
+              if (!f2[y * cw + x] &&
+                  (f2[y * cw + x - 1] || f2[y * cw + x + 1] || f2[(y - 1) * cw + x] || f2[(y + 1) * cw + x])) {
+                flag[y * cw + x] = 1;
+              }
+            }
+          }
+        }
+        for (let x = rx0; x <= rx1; x++) {
+          let y = ry0;
+          while (y <= ry1) {
+            if (!flag[y * cw + x]) { y++; continue; }
+            let ye = y;
+            while (ye <= ry1 && flag[ye * cw + x]) ye++;
+            const ja = ((y - 1) * cw + x) * 4, jb = (ye * cw + x) * 4;
+            for (let yy = y; yy < ye; yy++) {
+              const t = (yy - y + 1) / (ye - y + 1);
+              const j = (yy * cw + x) * 4;
+              for (let k = 0; k < 3; k++) d[j + k] = Math.round(d[ja + k] * (1 - t) + d[jb + k] * t);
+            }
+            y = ye;
+          }
+        }
+      }
       // a drawn baseline rule is a thin row where near-black spans most of
       // the cell — clear those pixels row-wise (hoof blobs never span that)
       for (let y = 0; cfg.lineErase !== false && y < ch; y++) {
@@ -340,6 +403,14 @@ for (const S of SHEETS) {
       oc.width = cfg.box.w; oc.height = cfg.box.h;
       const og = oc.getContext('2d');
       og.imageSmoothingQuality = 'high';
+      if (cfg.stretch) {   // non-uniform: trimmed bbox fills the box exactly
+        const sw = cfg.box.w / (cell.x1 - cell.x0 + 1);
+        const sh = cfg.box.h / (cell.y1 - cell.y0 + 1);
+        og.translate(-cell.x0 * sw, -cell.y0 * sh);
+        og.scale(sw, sh);
+        og.drawImage(cell.c, 0, 0);
+        return oc.toDataURL('image/webp', 0.9);
+      }
       const cx = (cell.x0 + cell.x1) / 2;
       og.translate(cfg.box.w / 2 - cx * s, cfg.box.h - feetRow * s);
       og.scale(s, s);

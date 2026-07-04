@@ -186,12 +186,16 @@ DH.screens = (() => {
           ctx.stroke();
         }
 
-        // environment preview
+        // environment preview — inside the painted frame's opening when
+        // framed (the frame overhangs the card 20px, beams reach ~42px in)
+        const ib = framed
+          ? { x: c.x + 42, y: c.y + 24, w: c.w - 84, h: 116 }
+          : { x: c.x + 10, y: c.y + 10, w: c.w - 20, h: 150 };
         ctx.save();
-        rr(ctx, c.x + 10, c.y + 10, c.w - 20, 150, 8);
+        rr(ctx, ib.x, ib.y, ib.w, ib.h, 8);
         ctx.clip();
-        ctx.translate(c.x + 10, c.y + 10);
-        ctx.scale((c.w - 20) / DH.W, 150 / 540);
+        ctx.translate(ib.x, ib.y);
+        ctx.scale(ib.w / DH.W, ib.h / 540);
         previews[i].render(ctx, 0, selT);
         DH.assets.draw(ctx, `${tk.species}_buck_walk_0`, DH.CX + 20, 470, {
           scale: DH.data.species[tk.species].bodyScale * 1.1, dir: -1, trophy: 4,
@@ -200,45 +204,42 @@ DH.screens = (() => {
         if (done) { ctx.fillStyle = 'rgba(10,14,10,0.55)'; ctx.fillRect(0, 0, DH.W, 540); }
         ctx.restore();
 
-        L(ctx, tk.name, c.x + c.w / 2, c.y + 205, 24, done ? '#8a9a88' : '#f2ead0', 'center');
-        L(ctx, `${DH.data.species[tk.species].name} — ${DH.data.species[tk.species].base} PTS BASE`,
-          c.x + c.w / 2, c.y + 232, 13, '#cfe3cf', 'center');
-        L(ctx, '5 SITES · 3 BUCKS EACH', c.x + c.w / 2, c.y + 254, 13, '#cfe3cf', 'center');
-        if (done) {
-          L(ctx, '✓ COMPLETE', c.x + c.w / 2, c.y + 292, 20, '#7ac96b', 'center');
-          L(ctx, `+${fmtScore(DH.G.completed[tk.id])}`, c.x + c.w / 2, c.y + 316, 16, '#ffd94d', 'center');
+        if (framed) {
+          L(ctx, tk.name, c.x + c.w / 2, c.y + 164, 19, done ? '#8a9a88' : '#f2ead0', 'center');
+          L(ctx, DH.data.species[tk.species].name.toUpperCase(), c.x + c.w / 2, c.y + 190, 12, '#cfe3cf', 'center');
+          L(ctx, `${DH.data.species[tk.species].base} PTS · 5 SITES · 3 BUCKS`,
+            c.x + c.w / 2, c.y + 209, 11, '#9ab59a', 'center');
         } else {
-          const btn = DH.assets.get('wood_btn').img;
-          if (btn) DH.assets.draw(ctx, 'wood_btn', c.x + c.w / 2, c.y + 296, { scale: hov ? 0.88 : 0.82 });
-          L(ctx, hov ? '▶ START HUNT' : 'START HUNT', c.x + c.w / 2, c.y + 302, 18,
+          L(ctx, tk.name, c.x + c.w / 2, c.y + 205, 24, done ? '#8a9a88' : '#f2ead0', 'center');
+          L(ctx, `${DH.data.species[tk.species].name} — ${DH.data.species[tk.species].base} PTS BASE`,
+            c.x + c.w / 2, c.y + 232, 13, '#cfe3cf', 'center');
+          L(ctx, '5 SITES · 3 BUCKS EACH', c.x + c.w / 2, c.y + 254, 13, '#cfe3cf', 'center');
+        }
+        if (done) {
+          L(ctx, '✓ COMPLETE', c.x + c.w / 2, c.y + (framed ? 254 : 292), framed ? 18 : 20, '#7ac96b', 'center');
+          L(ctx, `+${fmtScore(DH.G.completed[tk.id])}`, c.x + c.w / 2, c.y + (framed ? 279 : 316), framed ? 15 : 16, '#ffd94d', 'center');
+        } else {
+          const by = framed ? 262 : 296;
+          DH.assets.draw(ctx, 'wood_btn', c.x + c.w / 2, c.y + by, { scale: hov ? 0.86 : 0.8 });
+          L(ctx, hov ? '▶ START HUNT' : 'START HUNT', c.x + c.w / 2, c.y + by + 6, framed ? 16 : 18,
             hov ? '#ffe97a' : '#ffd94d', 'center');
         }
         // painted frame + species badge ride on top of the card edges
         if (framed) {
-          DH.assets.draw(ctx, 'card_frame', c.x, c.y, {});
-          if (hov) {
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = 'rgba(255,233,122,0.8)';
-            rr(ctx, c.x + 2, c.y + 2, c.w - 4, c.h - 4, 12);
-            ctx.stroke();
-          }
+          if (hov) { ctx.shadowColor = 'rgba(255,217,77,0.85)'; ctx.shadowBlur = 16; }
+          DH.assets.draw(ctx, 'card_frame', c.x - 20, c.y - 20, {});
+          ctx.shadowBlur = 0;
         }
         const badge = DH.assets.get(`badge_${tk.species}`).img;
-        if (badge) DH.assets.draw(ctx, `badge_${tk.species}`, c.x + 40, c.y + 40, { scale: 0.95 });
+        if (badge) {
+          DH.assets.draw(ctx, `badge_${tk.species}`, c.x + 28, c.y + 26,
+            { scale: 0.95, alpha: done ? 0.65 : 1 });
+        }
         ctx.restore();
       });
       // gun shop entrance
       const sb = shopBtn();
-      if (DH.assets.get('wood_btn').img) {
-        DH.assets.draw(ctx, 'wood_btn', CX, sb.y + sb.h / 2, { scale: 0.92 });
-      } else {
-        DH.util.rr(ctx, sb.x, sb.y, sb.w, sb.h, 10);
-        ctx.fillStyle = '#2c2416';
-        ctx.fill();
-        ctx.lineWidth = 2.5;
-        ctx.strokeStyle = '#c9a54a';
-        ctx.stroke();
-      }
+      DH.assets.draw(ctx, 'wood_btn', CX, sb.y + sb.h / 2, { scale: 0.92 });
       L(ctx, '🛒 GUN SHOP', CX, sb.y + 27, 17, '#ffd94d', 'center');
       L(ctx, 'COMPLETE ALL THREE TREKS FOR YOUR FINAL SCORE', CX, 516, 12, '#9ab59a', 'center');
       DH.hud.drawMute(ctx);
