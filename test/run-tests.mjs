@@ -50,6 +50,17 @@ async function leadClick(page, tgt) {
   }, [tgt.x, tgt.y, tgt.vx || 0, tgt.vy || 0]);
 }
 
+// lead a shot at the target's HEAD hitbox
+async function page_headshot(page, tgt) {
+  return page.evaluate(([hx, hy, vx, vy]) => {
+    const t0 = window.__DH.flightTime(hx, hy);
+    const ax = hx + vx * t0, ay = hy + vy * t0;
+    const t = window.__DH.flightTime(ax, ay);
+    window.__DH.click(ax, ay);
+    return t;
+  }, [tgt.hx, tgt.hy, tgt.vx || 0, tgt.vy || 0]);
+}
+
 // scripted player: clears the current HUNTING site by shooting every buck
 async function playSite(page) {
   let guard = 0;
@@ -171,6 +182,18 @@ async function main() {
     ok('tap on reload button does not fire', (await D(p, 'shells')) === 2);
     await D(p, 'warp', 0.6);
     ok('reload button refills shells', (await D(p, 'shells')) === 3);
+
+    // 4b — headshots land on the painted head and pay 1.5×
+    await D(p, 'forceSpawn', 'buck', 3);
+    await D(p, 'warp', 2.6);
+    const hsBuck = (await D(p, 'animals')).filter((a) => a.role === 'buck' &&
+      a.trophy === 3 && ['cross', 'graze', 'flee'].includes(a.state)).pop();
+    const hsScore = await D(p, 'score');
+    const hsFlight = await page_headshot(p, hsBuck);
+    await D(p, 'warp', hsFlight + 0.1);
+    // deer 400 × mid-lane 1.25 × walk 1.0 × head 1.5 × trophy-3 1.3 = 975
+    ok('headshot pays the 1.5× head multiplier', (await D(p, 'score')) === hsScore + 975,
+       `delta=${(await D(p, 'score')) - hsScore}`);
 
     // 5 — doe penalty ends the site
     await D(p, 'forceSpawn', 'doe');

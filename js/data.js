@@ -57,10 +57,21 @@ DH.data = (() => {
       },
       doeP: { coat: '#a57248', coatDark: '#8a5d3a', headC: '#9a6940' },
       antlerStyle: 'branched',
+      // calibrated to the painted sprites (gx/gy = head position while grazing)
       hitboxes: [
-        { part: 'head',   cx: 56, cy: -76, rx: 15, ry: 13 },
-        { part: 'vitals', cx: 16, cy: -52, rx: 20, ry: 17 },
-        { part: 'body',   cx: -6, cy: -50, rx: 46, ry: 24 },
+        { part: 'head',   cx: 40, cy: -114, rx: 16, ry: 15, gx: 58, gy: -34 },
+        { part: 'vitals', cx: 18, cy: -84,  rx: 21, ry: 18 },
+        { part: 'body',   cx: -8, cy: -82,  rx: 50, ry: 26 },
+      ],
+      hitboxesDoe: [
+        { part: 'head',   cx: 40, cy: -86, rx: 13, ry: 12, gx: 55, gy: -30 },
+        { part: 'vitals', cx: 14, cy: -64, rx: 18, ry: 15 },
+        { part: 'body',   cx: -4, cy: -62, rx: 45, ry: 21 },
+      ],
+      hitboxesMonster: [                  // local units; drawn 1.15× like the sprite
+        { part: 'head',   cx: 52, cy: -103, rx: 15, ry: 14, gx: 60, gy: -36 },
+        { part: 'vitals', cx: 16, cy: -74,  rx: 21, ry: 18 },
+        { part: 'body',   cx: -6, cy: -72,  rx: 50, ry: 26 },
       ],
     },
     elk: {

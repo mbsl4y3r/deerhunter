@@ -26,6 +26,12 @@ DH.entities = (() => {
       const monster = DH.assets && DH.assets.get(`${this.sp}_monster_walk_0`);
       this.skin = this.role === 'buck' && this.trophy >= 5 && monster && monster.img
         ? 'monster' : this.role;
+      // hitbox set follows the art: does and monsters get their own boxes,
+      // and the monster's scale up with his bigger sprite box
+      this.hitboxes = (this.role === 'doe' && this.def.hitboxesDoe)
+        || (this.skin === 'monster' && this.def.hitboxesMonster)
+        || this.def.hitboxes;
+      this.hbScale = this.skin === 'monster' ? 1.15 : 1;
       this.legPhase = DH.util.rand();
       this.stateT = 0;
       this.alpha = 1;
@@ -167,15 +173,24 @@ DH.entities = (() => {
       });
     }
 
+    // a hitbox center in screen space, honoring the graze head position
+    hbCenter(hb) {
+      const grazing = this.state === 'graze' && hb.part === 'head' && hb.gx != null;
+      const cx = grazing ? hb.gx : hb.cx;
+      const cy = grazing ? hb.gy : hb.cy;
+      const s = this.scale * this.hbScale;
+      return { x: this.x + cx * s * this.dir, y: this.lane.y + cy * s };
+    }
+
     // point-in-ellipse against species hitboxes; returns best part or null
     hitTest(px, py) {
       if (!this.alive) return null;
       let best = null;
-      for (const hb of this.def.hitboxes) {
-        const ex = this.x + hb.cx * this.scale * this.dir;
-        const ey = this.lane.y + hb.cy * this.scale;
-        const dx = (px - ex) / (hb.rx * this.scale);
-        const dy = (py - ey) / (hb.ry * this.scale);
+      const s = this.scale * this.hbScale;
+      for (const hb of this.hitboxes) {
+        const c = this.hbCenter(hb);
+        const dx = (px - c.x) / (hb.rx * s);
+        const dy = (py - c.y) / (hb.ry * s);
         if (dx * dx + dy * dy <= 1) {
           const mult = DH.data.scoring.partMult[hb.part];
           if (!best || mult > best.mult) best = { part: hb.part, mult };
@@ -185,8 +200,13 @@ DH.entities = (() => {
     }
 
     vitalsPoint() {
-      const hb = this.def.hitboxes.find((h) => h.part === 'vitals') || this.def.hitboxes[0];
-      return { x: this.x + hb.cx * this.scale * this.dir, y: this.lane.y + hb.cy * this.scale };
+      const hb = this.hitboxes.find((h) => h.part === 'vitals') || this.hitboxes[0];
+      return this.hbCenter(hb);
+    }
+
+    headPoint() {
+      const hb = this.hitboxes.find((h) => h.part === 'head') || this.hitboxes[0];
+      return this.hbCenter(hb);
     }
 
     onScreen() {

@@ -223,10 +223,12 @@ DH.main = (() => {
           if (!st || !st._animals) return [];
           return st._animals().map((a) => {
             const v = a.vitalsPoint();
+            const h = a.headPoint ? a.headPoint() : v;
             const vel = a.velocity();
             return {
               species: a.sp || 'duck', role: a.role || 'duck', state: a.state,
               x: Math.round(v.x * 10) / 10, y: Math.round(v.y * 10) / 10,
+              hx: Math.round(h.x * 10) / 10, hy: Math.round(h.y * 10) / 10,
               vx: Math.round(vel.x * 10) / 10, vy: Math.round(vel.y * 10) / 10,
               onScreen: a.onScreen(), trophy: a.trophy || 0,
             };
