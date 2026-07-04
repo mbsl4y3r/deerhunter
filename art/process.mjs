@@ -110,6 +110,11 @@ SHEETS.push(
     names: ['shell'],
     box: { w: 12, h: 24 }, fill: 0.95, fit: 'h', lineErase: false },
 );
+SHEETS.push(
+  { file: 'logo.png', cells: 1, take: [0],
+    names: ['logo'],
+    box: { w: 460, h: 190 }, fill: 0.97, fit: 'w', lineErase: false },
+);
 for (const id of ['pump12', 'lever30', 'win94', 'bolt700', 'auto5']) {
   SHEETS.push({ file: `gun_${id}.png`, cells: 1, take: [0],
     names: [`gun_${id}`],
