@@ -21,6 +21,8 @@ step, no runtime dependencies. See README.md for gameplay and structure.
 - Bump `js/version.js` (vYYYY.MM.DD-N) in every push — the title screen shows
   it and installed home-screen apps rely on it to confirm updates (sw.js is
   network-first; users may need one app relaunch to fetch fresh builds).
+- GitHub Pages serves from `main`. Mirror every dev-branch push to main
+  (user-approved): `git push origin claude/deer-hunter-game-c11khi:main`.
 
 ## Design decisions (user-confirmed)
 
