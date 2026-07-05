@@ -16,7 +16,8 @@ DH.entities = (() => {
       this.behavior = cfg.behavior || 'walk';
       this.trophy = cfg.trophy || 3;
       this.pauses = (cfg.pauses || []).map((p) => ({ atX: p.atX * DH.W, dur: p.dur, done: false }));
-      this.scale = lerp(0.35, 1.0, this.lane.depth) * this.def.bodyScale;
+      this.scale = lerp(0.35, 1.0, this.lane.depth) * this.def.bodyScale
+        * (cfg.role === 'doe' && this.def.doeScale ? this.def.doeScale : 1);
       this.dir = cfg.side === 'L' ? 1 : -1;
       const margin = this.def.p.bodyLen * 1.3 * this.scale + 30;
       this.x = cfg.side === 'L' ? -margin : DH.W + margin;
@@ -309,6 +310,113 @@ DH.entities = (() => {
     }
   }
 
+  // Small wildlife that wanders through hunting sites. Birds are pure
+  // atmosphere (no hitbox, they scatter at gunfire); squirrels and rabbits
+  // are classic small-game bonus targets; skunks cost you if you shoot one.
+  class Critter {
+    constructor(cfg) {          // { type, side, y }
+      this.type = cfg.type;
+      this.dir = cfg.side === 'L' ? 1 : -1;
+      this.x = cfg.side === 'L' ? -40 : DH.W + 40;
+      this.y = cfg.y;
+      this.baseY = cfg.y;
+      this.state = 'move';      // move | dying | downed | dead
+      this.stateT = 0;
+      this.t = DH.util.rand() * 10;
+      this.rot = 0;
+      this.escaped = false;
+      this.frame = 0;
+      this.pauseT = 0;
+      const P = {
+        bird:     { speed: 120 + DH.util.rand() * 70, rx: 0,  ry: 0,  scale: 0.8 + DH.util.rand() * 0.4 },
+        squirrel: { speed: 130, rx: 20, ry: 15, scale: 1 },
+        rabbit:   { speed: 150, rx: 20, ry: 16, scale: 1 },
+        skunk:    { speed: 34,  rx: 24, ry: 15, scale: 1 },
+      }[this.type];
+      this.speed = P.speed;
+      this.rx = P.rx; this.ry = P.ry;
+      this.scale = P.scale;
+      this.hopV = 0;
+    }
+
+    get alive() { return this.state === 'move'; }
+    get gone() { return this.state === 'dead' || this.escaped; }
+
+    update(dt) {
+      this.stateT += dt;
+      this.t += dt;
+      if (this.state === 'move') {
+        if (this.type === 'bird') {
+          this.x += this.dir * this.speed * dt;
+          this.y = this.baseY + Math.sin(this.t * 3.2) * 9;
+          this.frame = Math.floor(this.t * 7) % 2;
+        } else if (this.type === 'squirrel') {
+          // dash-pause-dash scurry
+          this.pauseT -= dt;
+          if (this.pauseT <= 0) this.pauseT = (this.pauseT < -0.4 ? 0.55 : 0) + 0.4 + DH.util.rand() * 0.4;
+          const dashing = this.pauseT > 0.4;
+          if (dashing) this.x += this.dir * this.speed * dt;
+          this.frame = dashing ? Math.floor(this.t * 10) % 2 : 0;
+        } else if (this.type === 'rabbit') {
+          // bounding hops
+          this.hopV += 800 * dt;
+          this.y += this.hopV * dt;
+          if (this.y >= this.baseY) { this.y = this.baseY; this.hopV = -170; }
+          this.x += this.dir * this.speed * dt;
+          this.frame = this.y < this.baseY - 6 ? 1 : 0;
+        } else {                 // skunk waddles, tail high, owns the place
+          this.x += this.dir * this.speed * dt;
+          this.frame = Math.floor(this.t * 4) % 2;
+        }
+        if (this.x < -60 || this.x > DH.W + 60) this.escaped = true;
+      } else if (this.state === 'dying') {
+        this.y += this.stateT * 600 * dt;
+        this.rot += this.dir * 6 * dt;
+        if (this.y >= this.baseY + 4) { this.y = this.baseY + 4; this.state = 'downed'; this.stateT = 0; }
+      } else if (this.state === 'downed') {
+        if (this.stateT > 1.4) this.state = 'dead';
+      }
+    }
+
+    // gunfire sends birds climbing and ground critters dashing for cover
+    scatter() {
+      if (!this.alive) return;
+      if (this.type === 'bird') {
+        this.speed = Math.min(this.speed * 1.7, 340);
+        this.baseY = Math.max(46, this.baseY - 26 - DH.util.rand() * 30);
+      } else if (this.type !== 'skunk') {
+        this.speed = Math.min(this.speed * 1.5, 280);
+        this.pauseT = 2;         // no more loitering
+      }
+    }
+
+    kill() { this.state = 'dying'; this.stateT = 0; this.rot = 0; }
+
+    hitTest(px, py) {
+      if (!this.alive || this.type === 'bird') return null;   // birds are scenery
+      const dx = (px - this.x) / this.rx;
+      const dy = (py - (this.y - this.ry)) / this.ry;
+      return dx * dx + dy * dy <= 1 ? { part: this.type, mult: 1 } : null;
+    }
+
+    draw(ctx) {
+      const name = `critter_${this.type}_${this.state === 'move' ? this.frame : 0}`;
+      const alpha = this.state === 'downed' ? Math.max(0, 1 - this.stateT / 1.4) : 1;
+      DH.assets.draw(ctx, name, this.x, this.y, {
+        scale: this.scale, dir: this.dir,
+        rot: this.state === 'move' ? 0 : Math.PI * 0.5 * Math.min(1, this.stateT * 3) * (this.dir > 0 ? 1 : -1),
+        alpha,
+      });
+    }
+
+    vitalsPoint() { return { x: this.x, y: this.y - this.ry }; }
+    onScreen() { return this.x > 30 && this.x < DH.W - 30; }
+    velocity() {
+      if (this.state !== 'move') return { x: 0, y: 0 };
+      return { x: this.dir * this.speed, y: 0 };
+    }
+  }
+
   // ---- particles & popups ----
   let particles = [];
 
@@ -355,6 +463,27 @@ DH.entities = (() => {
     }
   }
 
+  function spawnGlass(x, y) {
+    for (let i = 0; i < 10; i++) {
+      const a = DH.util.rand() * Math.PI * 2;
+      const sp = 60 + DH.util.rand() * 130;
+      particles.push({
+        type: 'glass', x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 60,
+        r: 1.5 + DH.util.rand() * 2.5, t: 0, life: 0.45 + DH.util.rand() * 0.25,
+      });
+    }
+  }
+
+  function spawnStink(x, y) {
+    for (let i = 0; i < 9; i++) {
+      particles.push({
+        type: 'stink', x: x + (DH.util.rand() - 0.5) * 26, y: y - DH.util.rand() * 8,
+        vx: (DH.util.rand() - 0.5) * 30, vy: -25 - DH.util.rand() * 35,
+        r: 6 + DH.util.rand() * 8, t: 0, life: 1.1 + DH.util.rand() * 0.5,
+      });
+    }
+  }
+
   function spawnPopup(x, y, text, color) {
     particles.push({ type: 'popup', x: clamp(x, 70, DH.W - 70), y: clamp(y, 60, 500), text, color, t: 0, life: 1.1 });
   }
@@ -397,6 +526,22 @@ DH.entities = (() => {
         ctx.ellipse(0, 0, p.r * 1.4, p.r * 0.7, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
+      } else if (p.type === 'glass') {
+        ctx.globalAlpha = k;
+        ctx.fillStyle = '#cfe8ea';
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.t * 9 + p.r);
+        ctx.fillRect(-p.r, -p.r * 0.4, p.r * 2, p.r * 0.8);
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      } else if (p.type === 'stink') {
+        ctx.globalAlpha = k * 0.45;
+        ctx.fillStyle = '#9dbf4e';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * (0.7 + 0.8 * (p.t / p.life)), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
       } else {
         ctx.globalAlpha = k * (p.type === 'dust' ? 0.5 : 0.85);
         ctx.fillStyle = p.type === 'dust' ? '#b8a888' : p.type === 'feather' ? '#e8e4d8' : '#f2f2ee';
@@ -410,6 +555,7 @@ DH.entities = (() => {
 
   function clearParticles() { particles = []; }
 
-  return { Animal, Duck, spawnPuff, spawnDust, spawnFeathers, spawnLeaves, spawnPopup,
+  return { Animal, Duck, Critter, spawnPuff, spawnDust, spawnFeathers, spawnLeaves,
+           spawnGlass, spawnStink, spawnPopup,
            updateParticles, drawParticles, clearParticles };
 })();

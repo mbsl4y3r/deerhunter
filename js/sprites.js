@@ -169,8 +169,8 @@ DH.sprites = (() => {
     // dewlap bell (moose)
     if (p.bell) seg(ctx, nx1 - 2, ny1 + p.headH * 0.5, nx1 - 4, ny1 + p.headH * 0.5 + 12, 5, p.coatDark);
 
-    // antlers
-    if (o.role !== 'doe') {
+    // antlers (predator species carry none)
+    if (o.role !== 'doe' && sp.antlerStyle !== 'none') {
       const tr = o.trophy || 3;
       if (sp.antlerStyle === 'palmate') antlersPalmate(ctx, nx1 - 2, ny1 - p.headH * 0.4, tr, p.antler);
       else antlersBranched(ctx, nx1 - 2, ny1 - p.headH * 0.4, tr, p.antler, sp.antlerStyle === 'branched-tall');
@@ -214,6 +214,136 @@ DH.sprites = (() => {
     ctx.stroke();
     ctx.fillStyle = '#ff4d3a';
     ctx.beginPath(); ctx.arc(0, 0, 1.8, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // ---- small wildlife (ambient critters + bonus-round targets) ----
+  function birdCritter(ctx, up) {
+    ctx.fillStyle = '#3a3f46';
+    ell(ctx, 0, 0, 8, 4.5, '#3a3f46');                    // body
+    ell(ctx, 7, -2, 4, 3, '#2f343a');                     // head
+    seg(ctx, 10, -2, 13, -1.4, 1.6, '#c99a3a');           // beak
+    ctx.beginPath();                                      // wing
+    ctx.moveTo(-2, -1);
+    if (up) ctx.quadraticCurveTo(-6, -14, -14, -12);
+    else ctx.quadraticCurveTo(-8, 8, -16, 9);
+    ctx.quadraticCurveTo(-8, up ? -4 : 2, -2, 1);
+    ctx.closePath();
+    ctx.fillStyle = '#2f343a';
+    ctx.fill();
+    ctx.beginPath();                                      // tail
+    ctx.moveTo(-7, 0); ctx.lineTo(-14, -3); ctx.lineTo(-13, 2);
+    ctx.closePath(); ctx.fill();
+  }
+
+  function squirrelCritter(ctx, run) {
+    ell(ctx, 0, -9, 11, 7, '#8a5a34');                    // body
+    ell(ctx, 10, -13, 5.5, 4.5, '#8a5a34');               // head
+    ell(ctx, 12, -15.5, 2, 2.5, '#8a5a34');               // ear
+    ell(ctx, 12.5, -13.5, 1, 1, '#1d130c');               // eye
+    // big curled tail
+    ctx.strokeStyle = '#9a6a40';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 7;
+    ctx.beginPath();
+    ctx.moveTo(-9, -8);
+    ctx.quadraticCurveTo(-18, -14, -14, -24);
+    ctx.stroke();
+    ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(-14, -24); ctx.quadraticCurveTo(-11, -28, -7, -26); ctx.stroke();
+    ctx.fillStyle = '#6b451f';
+    if (run) { ctx.fillRect(-6, -4, 4, 4); ctx.fillRect(5, -4, 4, 4); }
+    else { ctx.fillRect(-5, -3, 4, 3); ctx.fillRect(4, -3, 4, 3); }
+  }
+
+  function rabbitCritter(ctx, stretch) {
+    ell(ctx, 0, -8, 10, 6.5, '#b0a08c');                  // body
+    ell(ctx, 9, -12, 5, 4, '#b0a08c');                    // head
+    ell(ctx, 8, -18, 1.8, 5, '#b0a08c');                  // ears
+    ell(ctx, 11, -18, 1.8, 5.5, '#a8987f');
+    ell(ctx, 11.5, -12.5, 1, 1, '#1d130c');               // eye
+    ell(ctx, -9, -9, 3, 3, '#e8e0d2');                    // cotton tail
+    ctx.fillStyle = '#9a8a74';
+    if (stretch) { ctx.fillRect(-8, -4, 6, 3.5); ctx.fillRect(6, -4, 5, 3.5); }
+    else { ctx.fillRect(-6, -3, 5, 3); ctx.fillRect(4, -3, 5, 3); }
+  }
+
+  function skunkCritter(ctx, step) {
+    ell(ctx, 0, -8, 12, 7, '#17181c');                    // body
+    ell(ctx, 11, -10, 5, 4, '#17181c');                   // head
+    // proud tail + the famous stripe
+    ctx.strokeStyle = '#17181c';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 9;
+    ctx.beginPath(); ctx.moveTo(-10, -8); ctx.quadraticCurveTo(-18, -18, -13, -27); ctx.stroke();
+    ctx.strokeStyle = '#f2f2ee';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(13, -12);
+    ctx.quadraticCurveTo(0, -17, -10, -12);
+    ctx.quadraticCurveTo(-17, -18, -13, -26);
+    ctx.stroke();
+    ell(ctx, 13, -11, 1, 1, '#fff');                      // eye
+    ctx.fillStyle = '#0e0f12';
+    ctx.fillRect(-6 + (step ? 1.5 : 0), -3, 3.5, 3);
+    ctx.fillRect(5 - (step ? 1.5 : 0), -3, 3.5, 3);
+  }
+
+  // bonus-round pop-up critters peeking from the grass (anchor at ground)
+  function raccoonPop(ctx) {
+    ell(ctx, 0, -18, 12, 14, '#5d5f66');                  // torso
+    ell(ctx, 0, -36, 10, 8.5, '#6b6d74');                 // head
+    ell(ctx, -7, -43, 3.2, 4, '#5d5f66');                 // ears
+    ell(ctx, 7, -43, 3.2, 4, '#5d5f66');
+    // bandit mask
+    ctx.fillStyle = '#23242a';
+    ell(ctx, -4.5, -37, 4.2, 2.8, '#23242a');
+    ell(ctx, 4.5, -37, 4.2, 2.8, '#23242a');
+    ell(ctx, -4, -37, 1.3, 1.3, '#fff');
+    ell(ctx, 4, -37, 1.3, 1.3, '#fff');
+    ell(ctx, 0, -31.5, 5.5, 3.4, '#d8d4c8');              // muzzle
+    ell(ctx, 0, -32.6, 1.6, 1.2, '#1d130c');              // nose
+    ell(ctx, -8, -20, 3, 6, '#d8d4c8', 0.18);             // paws up
+    ell(ctx, 8, -20, 3, 6, '#d8d4c8', -0.18);
+  }
+
+  function skunkPop(ctx) {
+    ell(ctx, 0, -16, 11, 12, '#17181c');
+    ell(ctx, 0, -32, 9, 8, '#17181c');
+    ell(ctx, -6, -39, 2.8, 3.6, '#17181c');
+    ell(ctx, 6, -39, 2.8, 3.6, '#17181c');
+    ctx.strokeStyle = '#f2f2ee';                          // stripe over the head
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(0, -39); ctx.quadraticCurveTo(0, -30, 0, -22); ctx.stroke();
+    // tail curling up beside the body
+    ctx.strokeStyle = '#17181c';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 8;
+    ctx.beginPath(); ctx.moveTo(9, -10); ctx.quadraticCurveTo(18, -22, 13, -34); ctx.stroke();
+    ctx.strokeStyle = '#f2f2ee';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(10, -12); ctx.quadraticCurveTo(17, -22, 13, -32); ctx.stroke();
+    ell(ctx, -3.4, -33, 1.4, 1.4, '#fff');
+    ell(ctx, 3.4, -33, 1.4, 1.4, '#fff');
+    ell(ctx, 0, -28.4, 1.6, 1.2, '#0a0a0c');
+  }
+
+  function bottleJug(ctx) {
+    // stoneware moonshine jug
+    ctx.fillStyle = '#c9b089';
+    DH.util.rr(ctx, -10, -14, 20, 26, 6);
+    ctx.fill();
+    ctx.fillStyle = '#b89c72';
+    DH.util.rr(ctx, -10, -2, 20, 14, 6);
+    ctx.fill();
+    ctx.fillStyle = '#8a6f4a';                            // neck + cork
+    ctx.fillRect(-3.5, -20, 7, 7);
+    ctx.fillStyle = '#6b4a2a';
+    ctx.fillRect(-2.5, -23, 5, 4);
+    ctx.fillStyle = '#5d4426';                            // XXX label
+    ctx.font = 'bold 9px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('XXX', 0, 3);
+    ell(ctx, 6, -10, 2, 5, 'rgba(255,255,255,0.35)');     // sheen
   }
 
   // rustic plank button behind menu labels (PNG override may replace it)
@@ -339,11 +469,21 @@ DH.sprites = (() => {
     // every side so its thick beams straddle the card edges (art-only).
     A.register('card_frame', { w: 312, h: 370, anchorX: 0, anchorY: 0, draw: () => {} });
     A.register('wood_btn', { w: 220, h: 52, anchorY: 0.5, draw: woodBtn });
-    for (const sp of ['deer', 'elk', 'moose']) {
+    for (const sp of ['deer', 'elk', 'moose', 'wolf']) {
       A.register(`badge_${sp}`, { w: 84, h: 84, anchorY: 0.5, draw: () => {} });
     }
     A.register('shell', { w: 12, h: 24, anchorY: 0.5, draw: shellIcon });
     A.register('cartridge', { w: 10, h: 26, anchorY: 0.5, draw: cartridgeIcon });
+    // ambient critters + bonus-round targets (anchor at the feet/ground)
+    for (let f = 0; f < 2; f++) {
+      A.register(`critter_bird_${f}`, { w: 36, h: 30, anchorY: 0.5, draw: (ctx) => birdCritter(ctx, f === 0) });
+      A.register(`critter_squirrel_${f}`, { w: 44, h: 34, draw: (ctx) => squirrelCritter(ctx, f === 1) });
+      A.register(`critter_rabbit_${f}`, { w: 44, h: 40, draw: (ctx) => rabbitCritter(ctx, f === 1) });
+      A.register(`critter_skunk_${f}`, { w: 52, h: 36, draw: (ctx) => skunkCritter(ctx, f === 1) });
+    }
+    A.register('raccoon_pop', { w: 56, h: 60, draw: raccoonPop });
+    A.register('skunk_pop', { w: 56, h: 58, draw: skunkPop });
+    A.register('bottle_jug', { w: 30, h: 50, anchorY: 0.5, draw: bottleJug });
   }
 
   return { registerAll, quadruped, shade };

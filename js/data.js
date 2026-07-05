@@ -14,6 +14,8 @@ DH.data = (() => {
     perfectTrek: 5000,
     duckPoints: 150,
     allDucksBonus: 1500,
+    critterPoints: { squirrel: 250, rabbit: 300 },   // small-game bonus targets
+    skunkPenalty: -500,                              // pepé is off-limits
   };
 
   const shells = 3;
@@ -119,6 +121,29 @@ DH.data = (() => {
         { part: 'head',   cx: 71, cy: -96, rx: 20, ry: 17, gx: 68, gy: -48 },
         { part: 'vitals', cx: 20, cy: -62, rx: 21, ry: 18 },
         { part: 'body',   cx: -8, cy: -58, rx: 58, ry: 28 },
+      ],
+    },
+    wolf: {
+      name: 'GRAY WOLF', base: 1000, bodyScale: 0.92,
+      walkSpeed: 88, runSpeed: 250, spookChance: 0.5,
+      // the "doe" of the pack is a pup: much smaller, absolutely off-limits
+      doeName: 'PUP', doeScale: 0.55,
+      doeWarn: "DON'T SHOOT THE PUPS!",
+      monsterBanner: 'ALPHA WOLF!',
+      targetPlural: 'WOLVES',
+      p: {
+        shoulderH: 40, bodyLen: 66, bodyH: 26, legLen: 32, legW: 5,
+        neckLen: 18, neckW: 10, headLen: 21, headH: 12, earLen: 12,
+        tail: 22, hump: 2, snoutDrop: 2,
+        coat: '#707684', coatDark: '#565b66', belly: '#cfcfc6',
+        headC: '#61666f', antler: '#ffffff', hoof: '#2a2a2a',
+      },
+      doeP: { coat: '#8a8f9a', coatDark: '#6b7078', headC: '#7a7f88' },
+      antlerStyle: 'none',
+      hitboxes: [
+        { part: 'head',   cx: 38, cy: -50, rx: 15, ry: 13, gx: 44, gy: -16 },
+        { part: 'vitals', cx: 12, cy: -37, rx: 15, ry: 12 },
+        { part: 'body',   cx: -6, cy: -35, rx: 38, ry: 17 },
       ],
     },
     duck: {
@@ -271,15 +296,81 @@ DH.data = (() => {
     },
   ];
 
-  const bonus = {
-    name: 'DUCK FLUSH', duration: 22,
-    waves: [
-      { t: 0.5, count: 3, speed: 150 },
-      { t: 7.0, count: 4, speed: 190 },
-      { t: 13.5, count: 5, speed: 235 },
+  // Wolf Creek: fast movers, lots of trots and runs — the marksman's trek.
+  treks.push({
+    id: 'canyon', name: 'WOLF CREEK', species: 'wolf', env: 'canyon',
+    sites: [
+      { duration: 25, spawns: [
+        { t: 1.0,  role: 'buck', lane: 1, side: 'L', behavior: 'walk', trophy: [2, 4], pauses: [{ atX: 0.5, dur: 1.6 }] },
+        { t: 5.5,  role: 'doe',  lane: 2, side: 'R', behavior: 'walk' },
+        { t: 9.0,  role: 'buck', lane: 0, side: 'R', behavior: 'trot', trophy: [1, 3] },
+        { t: 13.0, role: 'doe',  lane: 1, side: 'L', behavior: 'walk' },
+        { t: 15.5, role: 'buck', lane: 2, side: 'L', behavior: 'trot', trophy: [3, 5] },
+      ]},
+      { duration: 24, spawns: [
+        { t: 1.0,  role: 'doe',  lane: 1, side: 'R', behavior: 'walk' },
+        { t: 3.5,  role: 'buck', lane: 2, side: 'L', behavior: 'trot', trophy: [2, 4] },
+        { t: 7.5,  role: 'buck', lane: 0, side: 'R', behavior: 'walk', trophy: [2, 4], pauses: [{ atX: 0.55, dur: 1.4 }] },
+        { t: 11.5, role: 'doe',  lane: 0, side: 'L', behavior: 'walk' },
+        { t: 14.0, role: 'buck', lane: 1, side: 'R', behavior: 'run', trophy: [3, 5] },
+        { t: 16.5, role: 'doe',  lane: 2, side: 'R', behavior: 'trot' },
+      ]},
+      { duration: 23, spawns: [
+        { t: 1.0,  role: 'buck', lane: 0, side: 'L', behavior: 'trot', trophy: [1, 4], pauses: [{ atX: 0.45, dur: 1.5 }] },
+        { t: 3.0,  role: 'doe',  lane: 2, side: 'R', behavior: 'walk' },
+        { t: 6.5,  role: 'buck', lane: 1, side: 'R', behavior: 'trot', trophy: [2, 4] },
+        { t: 10.0, role: 'doe',  lane: 1, side: 'L', behavior: 'walk' },
+        { t: 13.0, role: 'buck', lane: 2, side: 'L', behavior: 'run', trophy: [4, 5] },
+        { t: 15.0, role: 'doe',  lane: 0, side: 'R', behavior: 'trot' },
+      ]},
+      { duration: 22, spawns: [
+        { t: 1.0,  role: 'doe',  lane: 2, side: 'L', behavior: 'trot' },
+        { t: 3.0,  role: 'buck', lane: 1, side: 'R', behavior: 'run', trophy: [2, 4] },
+        { t: 6.5,  role: 'doe',  lane: 0, side: 'L', behavior: 'walk' },
+        { t: 9.0,  role: 'buck', lane: 2, side: 'R', behavior: 'run', trophy: [3, 5] },
+        { t: 12.0, role: 'doe',  lane: 1, side: 'R', behavior: 'walk' },
+        { t: 14.0, role: 'buck', lane: 0, side: 'L', behavior: 'trot', trophy: [3, 5] },
+      ]},
+      { duration: 21, spawns: [
+        { t: 1.0,  role: 'buck', lane: 2, side: 'R', behavior: 'run', trophy: [3, 5] },
+        { t: 3.5,  role: 'doe',  lane: 1, side: 'L', behavior: 'trot' },
+        { t: 5.5,  role: 'buck', lane: 0, side: 'L', behavior: 'run', trophy: [2, 5] },
+        { t: 8.5,  role: 'doe',  lane: 2, side: 'L', behavior: 'walk' },
+        { t: 10.5, role: 'doe',  lane: 0, side: 'R', behavior: 'trot' },
+        { t: 13.0, role: 'buck', lane: 1, side: 'R', behavior: 'run', trophy: [4, 5] },
+      ]},
     ],
-  };
+  });
+
+  // Bonus minigames rotate by trek: trek N plays bonusGames[N % length].
+  const bonusGames = [
+    {
+      id: 'ducks', name: 'DUCK FLUSH', label: 'DUCKS', intro: 'SHOOT EVERY DUCK!',
+      duration: 22, points: 150, allBonus: 1500,
+      waves: [
+        { t: 0.5, count: 3, speed: 150 },
+        { t: 7.0, count: 4, speed: 190 },
+        { t: 13.5, count: 5, speed: 235 },
+      ],
+    },
+    {
+      id: 'bottles', name: 'BOTTLE BLITZ', label: 'BOTTLES', intro: 'SMASH THE MOONSHINE!',
+      duration: 21, points: 200, allBonus: 1500,
+      waves: [
+        { t: 0.5, count: 3, lob: 560 },
+        { t: 6.5, count: 4, lob: 620 },
+        { t: 12.5, count: 5, lob: 680 },
+      ],
+    },
+    {
+      id: 'critters', name: 'CRITTER ALLEY', label: 'RACCOONS', intro: 'RACCOONS ONLY — SPARE THE SKUNKS!',
+      duration: 23, points: 300, allBonus: 2000, skunkPenalty: -500,
+      raccoons: 12, skunks: 5, upTime: 1.35,
+    },
+  ];
+  // legacy alias (older saves/tests referenced DH.data.bonus)
+  const bonus = bonusGames[0];
 
   return { scoring, shells, reloadTime, fireCooldown, bulletSpeed, guns, upgrades,
-           species, LANES, treks, bonus };
+           species, LANES, treks, bonus, bonusGames };
 })();

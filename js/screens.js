@@ -90,6 +90,8 @@ DH.screens = (() => {
       }
       for (const a of titleAnimals) a.update(dt);
       titleAnimals = titleAnimals.filter((a) => !a.gone);
+      // cabinet-style attract loop: idle title drifts to the trophy room
+      if (titleT > 18 && DH.highscores.load().length) DH.setState('HISCORES');
     },
     render(ctx) {
       const CX = DH.CX;
@@ -133,9 +135,16 @@ DH.screens = (() => {
   };
 
   // ---------- TREK SELECT ----------
+  // Cards render in a 272×330 "unit" space and scale down (k) as treks are
+  // added, so any number of cards shares the row.
   function cards() {
-    const w = 272, h = 330, gap = 32, y = 130;
-    return [-1, 0, 1].map((i) => ({ x: DH.CX + i * (w + gap) - w / 2, y, w, h }));
+    const n = DH.data.treks.length, uw = 272, gap = 26;
+    const k = Math.min(1, (DH.W - 50) / (n * (uw + gap)));
+    const w = uw * k, h = 330 * k;
+    const y = 130 + (330 - h) / 2;
+    return DH.data.treks.map((tk, i) => ({
+      x: DH.CX + (i - (n - 1) / 2) * ((uw + gap) * k) - w / 2, y, w, h, k,
+    }));
   }
   let previews = null;
   let selT = 0;
@@ -177,7 +186,10 @@ DH.screens = (() => {
         const hov = !done && hitCard(DH.input.mouse.x, DH.input.mouse.y) === i;
         ctx.save();
         if (hov) { ctx.translate(c.x + c.w / 2, c.y + c.h / 2); ctx.scale(1.03, 1.03); ctx.translate(-c.x - c.w / 2, -c.y - c.h / 2); }
-        rr(ctx, c.x, c.y, c.w, c.h, 12);
+        // everything below draws in 272×330 unit space
+        ctx.translate(c.x, c.y);
+        ctx.scale(c.k, c.k);
+        rr(ctx, 0, 0, 272, 330, 12);
         ctx.fillStyle = '#16261a';
         ctx.fill();
         if (!framed) {
@@ -189,8 +201,8 @@ DH.screens = (() => {
         // environment preview — inside the painted frame's opening when
         // framed (the frame overhangs the card 20px, beams reach ~42px in)
         const ib = framed
-          ? { x: c.x + 42, y: c.y + 24, w: c.w - 84, h: 116 }
-          : { x: c.x + 10, y: c.y + 10, w: c.w - 20, h: 150 };
+          ? { x: 42, y: 24, w: 272 - 84, h: 116 }
+          : { x: 10, y: 10, w: 272 - 20, h: 150 };
         ctx.save();
         rr(ctx, ib.x, ib.y, ib.w, ib.h, 8);
         ctx.clip();
@@ -204,35 +216,36 @@ DH.screens = (() => {
         if (done) { ctx.fillStyle = 'rgba(10,14,10,0.55)'; ctx.fillRect(0, 0, DH.W, 540); }
         ctx.restore();
 
+        const plural = DH.data.species[tk.species].targetPlural || 'BUCKS';
         if (framed) {
-          L(ctx, tk.name, c.x + c.w / 2, c.y + 164, 19, done ? '#8a9a88' : '#f2ead0', 'center');
-          L(ctx, DH.data.species[tk.species].name.toUpperCase(), c.x + c.w / 2, c.y + 190, 12, '#cfe3cf', 'center');
-          L(ctx, `${DH.data.species[tk.species].base} PTS · 5 SITES · 3 BUCKS`,
-            c.x + c.w / 2, c.y + 209, 11, '#9ab59a', 'center');
+          L(ctx, tk.name, 136, 164, 19, done ? '#8a9a88' : '#f2ead0', 'center');
+          L(ctx, DH.data.species[tk.species].name.toUpperCase(), 136, 190, 12, '#cfe3cf', 'center');
+          L(ctx, `${DH.data.species[tk.species].base} PTS · 5 SITES · 3 ${plural}`,
+            136, 209, 11, '#9ab59a', 'center');
         } else {
-          L(ctx, tk.name, c.x + c.w / 2, c.y + 205, 24, done ? '#8a9a88' : '#f2ead0', 'center');
+          L(ctx, tk.name, 136, 205, 24, done ? '#8a9a88' : '#f2ead0', 'center');
           L(ctx, `${DH.data.species[tk.species].name} — ${DH.data.species[tk.species].base} PTS BASE`,
-            c.x + c.w / 2, c.y + 232, 13, '#cfe3cf', 'center');
-          L(ctx, '5 SITES · 3 BUCKS EACH', c.x + c.w / 2, c.y + 254, 13, '#cfe3cf', 'center');
+            136, 232, 13, '#cfe3cf', 'center');
+          L(ctx, `5 SITES · 3 ${plural} EACH`, 136, 254, 13, '#cfe3cf', 'center');
         }
         if (done) {
-          L(ctx, '✓ COMPLETE', c.x + c.w / 2, c.y + (framed ? 254 : 292), framed ? 18 : 20, '#7ac96b', 'center');
-          L(ctx, `+${fmtScore(DH.G.completed[tk.id])}`, c.x + c.w / 2, c.y + (framed ? 279 : 316), framed ? 15 : 16, '#ffd94d', 'center');
+          L(ctx, '✓ COMPLETE', 136, framed ? 254 : 292, framed ? 18 : 20, '#7ac96b', 'center');
+          L(ctx, `+${fmtScore(DH.G.completed[tk.id])}`, 136, framed ? 279 : 316, framed ? 15 : 16, '#ffd94d', 'center');
         } else {
           const by = framed ? 262 : 296;
-          DH.assets.draw(ctx, 'wood_btn', c.x + c.w / 2, c.y + by, { scale: hov ? 0.86 : 0.8 });
-          L(ctx, hov ? '▶ START HUNT' : 'START HUNT', c.x + c.w / 2, c.y + by + 6, framed ? 16 : 18,
+          DH.assets.draw(ctx, 'wood_btn', 136, by, { scale: hov ? 0.86 : 0.8 });
+          L(ctx, hov ? '▶ START HUNT' : 'START HUNT', 136, by + 6, framed ? 16 : 18,
             hov ? '#ffe97a' : '#ffd94d', 'center');
         }
         // painted frame + species badge ride on top of the card edges
         if (framed) {
           if (hov) { ctx.shadowColor = 'rgba(255,217,77,0.85)'; ctx.shadowBlur = 16; }
-          DH.assets.draw(ctx, 'card_frame', c.x - 20, c.y - 20, {});
+          DH.assets.draw(ctx, 'card_frame', -20, -20, {});
           ctx.shadowBlur = 0;
         }
-        const badge = DH.assets.get(`badge_${tk.species}`).img;
+        const badge = DH.assets.get(`badge_${tk.species}`) && DH.assets.get(`badge_${tk.species}`).img;
         if (badge) {
-          DH.assets.draw(ctx, `badge_${tk.species}`, c.x + 28, c.y + 26,
+          DH.assets.draw(ctx, `badge_${tk.species}`, 28, 26,
             { scale: 0.95, alpha: done ? 0.65 : 1 });
         }
         ctx.restore();
@@ -241,7 +254,7 @@ DH.screens = (() => {
       const sb = shopBtn();
       DH.assets.draw(ctx, 'wood_btn', CX, sb.y + sb.h / 2, { scale: 0.92 });
       L(ctx, '🛒 GUN SHOP', CX, sb.y + 27, 17, '#ffd94d', 'center');
-      L(ctx, 'COMPLETE ALL THREE TREKS FOR YOUR FINAL SCORE', CX, 516, 12, '#9ab59a', 'center');
+      L(ctx, 'COMPLETE ALL FOUR TREKS FOR YOUR FINAL SCORE', CX, 516, 12, '#9ab59a', 'center');
       DH.hud.drawMute(ctx);
     },
     onClick(x, y) {
@@ -287,10 +300,19 @@ DH.screens = (() => {
     'RELOAD EARLY — TAP THE BUTTON, R-CLICK, OR SPACE',
     "SHOOT A DOE AND THE SITE'S OVER — WATCH FOR ANTLERS",
   ];
-  let introT = 0;
+  let introT = 0, introBg = null;
 
   DH.states.SITE_INTRO = {
-    enter() { introT = 0; },
+    enter() {
+      introT = 0;
+      // the very scene you're about to hunt (same seed as HUNTING), dimmed
+      const trek = DH.data.treks[DH.G.trekIndex];
+      introBg = DH.background.build(trek.env, DH.G.seed + DH.G.trekIndex * 100 + DH.G.siteIndex * 7);
+    },
+    onResize() {
+      const trek = DH.data.treks[DH.G.trekIndex];
+      introBg = DH.background.build(trek.env, DH.G.seed + DH.G.trekIndex * 100 + DH.G.siteIndex * 7);
+    },
     update(dt) {
       introT += dt;
       if (introT >= 1.8) DH.setState('HUNTING');
@@ -298,7 +320,14 @@ DH.screens = (() => {
     render(ctx) {
       const CX = DH.CX;
       const trek = DH.data.treks[DH.G.trekIndex];
-      fill(ctx);
+      if (introBg) {
+        introBg.render(ctx, 0, introT);
+        introBg.renderFront(ctx, 0);
+        ctx.fillStyle = 'rgba(8,14,10,0.62)';
+        ctx.fillRect(0, 0, DH.W, 540);
+      } else {
+        fill(ctx);
+      }
       const pop = easeOutBack(Math.min(1, introT * 2.4));
       ctx.save();
       ctx.translate(CX, 250);
@@ -344,11 +373,17 @@ DH.screens = (() => {
       L(ctx, `SHOTS ${rec.shots} · HITS ${rec.hits} · ACCURACY ${Math.round(rec.accuracy * 100)}%`,
         CX, y, 15, '#cfe3cf', 'center');
       y += 32;
+      if (rec.critterPts) {
+        const neg = rec.critterPts < 0;
+        L(ctx, 'CRITTERS', CX - 180, y, 15, neg ? '#9dbf4e' : '#8fd3ff');
+        L(ctx, (neg ? '' : '+') + fmtScore(rec.critterPts), CX + 170, y, 15, neg ? '#9dbf4e' : '#8fd3ff');
+        y += 28;
+      }
       if (rec.accBonus) { L(ctx, 'ACCURACY BONUS', CX - 180, y, 15, '#e8f0e8'); L(ctx, '+' + fmtScore(rec.accBonus), CX + 170, y, 15, '#ffd94d'); y += 28; }
       if (rec.threeBuckBonus) { L(ctx, 'THREE BUCK BONUS', CX - 180, y, 15, '#e8f0e8'); L(ctx, '+' + fmtScore(rec.threeBuckBonus), CX + 170, y, 15, '#ffd94d'); y += 28; }
       if (rec.doeHit) { L(ctx, 'DOE PENALTY', CX - 180, y, 15, '#ff5a4a'); L(ctx, fmtScore(rec.penalty), CX + 170, y, 15, '#ff5a4a'); y += 28; }
       if (rec.cash) { L(ctx, 'CASH EARNED', CX - 180, y, 15, '#7ac96b'); L(ctx, '+$' + fmtScore(rec.cash), CX + 170, y, 15, '#7ac96b'); y += 28; }
-      const siteTotal = rec.kills.reduce((s, k) => s + k.points, 0) + rec.accBonus + rec.threeBuckBonus + rec.penalty;
+      const siteTotal = rec.kills.reduce((s, k) => s + k.points, 0) + rec.accBonus + rec.threeBuckBonus + rec.penalty + (rec.critterPts || 0);
       L(ctx, 'SITE TOTAL', CX - 180, y + 8, 18, '#f2ead0');
       L(ctx, (siteTotal >= 0 ? '+' : '') + fmtScore(siteTotal), CX + 170, y + 8, 18, siteTotal >= 0 ? '#ffd94d' : '#ff5a4a');
       L(ctx, 'TAP TO CONTINUE', CX, 470, 14, '#fff', 'center');
@@ -393,7 +428,8 @@ DH.screens = (() => {
       panel(ctx, CX - 230, 60, 460, 420);
       L(ctx, trek.name, CX, 112, 28, '#cfe3cf', 'center');
       L(ctx, 'TREK COMPLETE!', CX, 152, 34, '#ffd94d', 'center');
-      L(ctx, `BUCKS TAKEN   ${trekSummary.bucks} / 15`, CX, 220, 20, '#f2ead0', 'center');
+      const plural = DH.data.species[trek.species].targetPlural || 'BUCKS';
+      L(ctx, `${plural} TAKEN   ${trekSummary.bucks} / 15`, CX, 220, 20, '#f2ead0', 'center');
       L(ctx, `ACCURACY   ${trekSummary.shots ? Math.round((trekSummary.hits / trekSummary.shots) * 100) : 0}%`,
         CX, 256, 20, '#f2ead0', 'center');
       if (trekSummary.perfect) L(ctx, `PERFECT TREK  +${fmtScore(trekSummary.perfect)}`, CX, 300, 20, '#7ac96b', 'center');
@@ -421,10 +457,12 @@ DH.screens = (() => {
       const CX = DH.CX;
       fill(ctx);
       panel(ctx, CX - 210, 100, 420, 330);
-      L(ctx, 'DUCK FLUSH', CX, 152, 30, '#ffd94d', 'center');
-      L(ctx, `DUCKS  ${bonusRec.hits} / ${bonusRec.total}`, CX, 216, 22, '#f2ead0', 'center');
-      L(ctx, `+${fmtScore(bonusRec.points)}`, CX, 258, 24, '#ffd94d', 'center');
-      if (bonusRec.allBonus) L(ctx, `FULL FLUSH BONUS  +${fmtScore(bonusRec.allBonus)}`, CX, 300, 18, '#7ac96b', 'center');
+      L(ctx, bonusRec.name || 'BONUS ROUND', CX, 152, 30, '#ffd94d', 'center');
+      L(ctx, `${bonusRec.label || 'HITS'}  ${bonusRec.hits} / ${bonusRec.total}`, CX, 216, 22, '#f2ead0', 'center');
+      L(ctx, `${bonusRec.points >= 0 ? '+' : ''}${fmtScore(bonusRec.points)}`, CX, 258, 24,
+        bonusRec.points >= 0 ? '#ffd94d' : '#ff5a4a', 'center');
+      if (bonusRec.allBonus) L(ctx, `PERFECT BONUS  +${fmtScore(bonusRec.allBonus)}`, CX, 300, 18, '#7ac96b', 'center');
+      if (bonusRec.skunked) L(ctx, `SKUNKED ×${bonusRec.skunked}...`, CX, 328, 15, '#9dbf4e', 'center');
       L(ctx, 'TAP TO CONTINUE', CX, 396, 15, '#fff', 'center');
       DH.hud.draw(ctx, {});
     },
@@ -466,8 +504,10 @@ DH.screens = (() => {
   };
 
   // ---------- HIGH SCORE ENTRY ----------
-  const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let initials = [0, 0, 0], slot = 0;
+  // 4 slots; trailing spaces trim away so shorter names work too
+  const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ ';
+  const SLOTS = 4;
+  let initials = [0, 0, 0, 26], slot = 0;
 
   function bump(d) {
     initials[slot] = (initials[slot] + d + ALPHA.length) % ALPHA.length;
@@ -475,17 +515,17 @@ DH.screens = (() => {
   }
 
   DH.states.HISCORE_ENTRY = {
-    enter() { initials = [0, 0, 0]; slot = 0; resT = 0; },
+    enter() { initials = [0, 0, 0, 26]; slot = 0; resT = 0; },
     update(dt) { resT += dt; },
     render(ctx) {
       const CX = DH.CX;
       fill(ctx);
-      panel(ctx, CX - 200, 80, 400, 380);
+      panel(ctx, CX - 210, 80, 420, 380);
       L(ctx, 'NEW HIGH SCORE!', CX, 136, 30, '#ffd94d', 'center');
       L(ctx, fmtScore(DH.G.score), CX, 178, 26, '#f2ead0', 'center');
-      L(ctx, 'ENTER YOUR INITIALS', CX, 218, 14, '#cfe3cf', 'center');
-      for (let i = 0; i < 3; i++) {
-        const x = CX - 80 + i * 80;
+      L(ctx, 'ENTER YOUR NAME', CX, 218, 14, '#cfe3cf', 'center');
+      for (let i = 0; i < SLOTS; i++) {
+        const x = CX - 120 + i * 80;
         const active = i === slot && Math.floor(resT * 2.4) % 2 === 0;
         rr(ctx, x - 28, 240, 56, 76, 8);
         ctx.fillStyle = i === slot ? '#1e3a26' : '#152a1b';
@@ -493,7 +533,11 @@ DH.screens = (() => {
         ctx.lineWidth = 2.5;
         ctx.strokeStyle = i === slot ? '#ffe97a' : '#c9a54a';
         ctx.stroke();
-        L(ctx, ALPHA[initials[i]], x, 298, 44, active || i !== slot ? '#fff' : '#ffe97a', 'center');
+        if (ALPHA[initials[i]] === ' ') {
+          L(ctx, '·', x, 298, 44, 'rgba(255,255,255,0.25)', 'center');
+        } else {
+          L(ctx, ALPHA[initials[i]], x, 298, 44, active || i !== slot ? '#fff' : '#ffe97a', 'center');
+        }
         L(ctx, '▲', x, 236, 16, '#ffd94d', 'center');
         L(ctx, '▼', x, 338, 16, '#ffd94d', 'center');
       }
@@ -504,12 +548,12 @@ DH.screens = (() => {
       ctx.strokeStyle = '#7ac96b';
       ctx.stroke();
       L(ctx, 'OK', CX, 402, 22, '#fff', 'center');
-      L(ctx, 'TAP ▲▼ / ARROWS · OK OR ENTER TO CONFIRM', CX, 442, 12, '#9ab59a', 'center');
+      L(ctx, 'TAP ▲▼ / TYPE · OK OR ENTER TO CONFIRM', CX, 442, 12, '#9ab59a', 'center');
     },
     onClick(x, y) {
       const CX = DH.CX;
-      for (let i = 0; i < 3; i++) {
-        const cx = CX - 80 + i * 80;
+      for (let i = 0; i < SLOTS; i++) {
+        const cx = CX - 120 + i * 80;
         if (x > cx - 32 && x < cx + 32) {
           if (y > 214 && y < 258) { slot = i; bump(1); return; }
           if (y > 320 && y < 356) { slot = i; bump(-1); return; }
@@ -521,19 +565,20 @@ DH.screens = (() => {
     onKey(k) {
       if (k === 'ArrowUp') bump(1);
       else if (k === 'ArrowDown') bump(-1);
-      else if (k === 'ArrowLeft') slot = (slot + 2) % 3;
-      else if (k === 'ArrowRight') slot = (slot + 1) % 3;
+      else if (k === 'ArrowLeft') slot = (slot + SLOTS - 1) % SLOTS;
+      else if (k === 'ArrowRight') slot = (slot + 1) % SLOTS;
       else if (k === 'Enter') confirmInitials();
       else if (/^[a-zA-Z]$/.test(k)) {
         initials[slot] = ALPHA.indexOf(k.toUpperCase());
-        slot = Math.min(2, slot + 1);
+        slot = Math.min(SLOTS - 1, slot + 1);
       }
     },
   };
 
   function confirmInitials() {
     DH.audio.play('fanfare');
-    DH.highscores.add(initials.map((i) => ALPHA[i]).join(''), DH.G.score);
+    const name = initials.map((i) => ALPHA[i]).join('').trim() || 'AAA';
+    DH.highscores.add(name, DH.G.score);
     DH.setState('HISCORES');
   }
 
@@ -572,5 +617,5 @@ DH.screens = (() => {
     onKey(k) { if (k === 'Enter' || k === 'Escape') DH.setState('TITLE'); },
   };
 
-  return {};
+  return { cardRect: (i) => cards()[i] };
 })();

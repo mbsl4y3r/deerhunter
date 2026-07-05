@@ -231,8 +231,13 @@ DH.main = (() => {
               hx: Math.round(h.x * 10) / 10, hy: Math.round(h.y * 10) / 10,
               vx: Math.round(vel.x * 10) / 10, vy: Math.round(vel.y * 10) / 10,
               onScreen: a.onScreen(), trophy: a.trophy || 0,
+              shootable: a.shootable !== false,
             };
           });
+        },
+        cardAt: (i) => {
+          const c = DH.screens.cardRect(i);
+          return c ? { x: c.x + c.w / 2, y: c.y + c.h / 2 } : null;
         },
         flightTime: (x, y) => DH.shooting.flightTime(x, y),
         click: (x, y) => { DH.input.mouse.x = x; DH.input.mouse.y = y; dispatch('click', x, y); },

@@ -83,24 +83,32 @@ async function playSite(page) {
   return 'STUCK';
 }
 
+// works across all three minigames: ducks/bottles are led in flight,
+// alley critters are stationary pop-ups; skunks report shootable=false
 async function playBonus(page) {
   let guard = 0;
   while (guard++ < 300) {
     const st = await D(page, 'state');
     if (st !== 'BONUS') return st;
-    const { duck, shells } = await page.evaluate(() => ({
-      duck: window.__DH.animals().find((a) => a.state === 'fly' && a.onScreen),
+    const { tgt, shells } = await page.evaluate(() => ({
+      tgt: window.__DH.animals().find((a) => a.shootable && a.onScreen &&
+        ['fly', 'up'].includes(a.state)),
       shells: window.__DH.shells(),
     }));
-    if (duck) {
+    if (tgt) {
       if (shells === 0) { await D(page, 'rclick'); await D(page, 'warp', 0.6); }
-      const t = await leadClick(page, duck);
+      const t = await leadClick(page, tgt);
       await D(page, 'warp', t + 0.12);
     } else {
       await D(page, 'warp', 0.4);
     }
   }
   return 'STUCK';
+}
+
+async function clickCard(page, i) {
+  const c = await D(page, 'cardAt', i);
+  await D(page, 'click', c.x, c.y);
 }
 
 async function canvasHasContent(page) {
@@ -140,7 +148,7 @@ async function main() {
     await D(p, 'click', 480, 300);
     ok('title click → TREK_SELECT', (await D(p, 'state')) === 'TREK_SELECT');
     await p.screenshot({ path: `${SHOTS}/02-trek-select.png` });
-    await D(p, 'click', 176, 290);
+    await clickCard(p, 0);
     ok('trek card → SITE_INTRO', (await D(p, 'state')) === 'SITE_INTRO');
     await D(p, 'warp', 2);
     ok('intro auto-advances → HUNTING', (await D(p, 'state')) === 'HUNTING');
@@ -186,8 +194,11 @@ async function main() {
     // 4b — headshots land on the painted head and pay 1.5×
     await D(p, 'forceSpawn', 'buck', 3);
     await D(p, 'warp', 2.6);
+    // the forced buck: trophy 3, walking (slow vx) in the mid lane (vitals
+    // y ≈ 330) — any buck matching that scores exactly the asserted 975
     const hsBuck = (await D(p, 'animals')).filter((a) => a.role === 'buck' &&
-      a.trophy === 3 && ['cross', 'graze', 'flee'].includes(a.state)).pop();
+      a.trophy === 3 && Math.abs(a.vx) < 60 && a.y > 300 && a.y < 370 &&
+      ['cross', 'graze'].includes(a.state)).pop();
     const hsScore = await D(p, 'score');
     const hsFlight = await page_headshot(p, hsBuck);
     await D(p, 'warp', hsFlight + 0.1);
@@ -216,7 +227,7 @@ async function main() {
     ok('wide canvas boots to TITLE', (await D(p, 'state')) === 'TITLE');
     await D(p, 'click', 588, 300);
     ok('wide canvas: title → TREK_SELECT', (await D(p, 'state')) === 'TREK_SELECT');
-    await D(p, 'click', 284, 290);            // forest card, recentered for w=1176
+    await clickCard(p, 0);                    // forest card, recentered for w=1176
     await D(p, 'warp', 2);
     ok('wide canvas: card click starts hunt', (await D(p, 'state')) === 'HUNTING');
     await D(p, 'warp', 3.5);
@@ -227,17 +238,18 @@ async function main() {
     await p.close();
   }
 
-  // 6 — full game: 3 treks + bonus rounds to FINAL_RESULTS, then high score
+  // 6 — full game: every trek + rotating bonus games to FINAL_RESULTS
   {
     const p = await newPage(HTTP);
     await p.evaluate(() => localStorage.clear());
+    const trekCount = await p.evaluate(() => window.DH.data.treks.length);
     await D(p, 'click', 480, 300);
-    const cardX = [176, 480, 784];
     let trekN = 0, guard = 0;
-    const envShot = { 1: '06-hunting-mountain.png', 2: '07-hunting-tundra.png' };
-    while (guard++ < 80) {
+    const envShot = { 1: '06-hunting-mountain.png', 2: '07-hunting-tundra.png', 3: '12-hunting-canyon.png' };
+    const bonusShot = { 1: '13-bonus-bottles.png', 2: '14-bonus-critters.png' };
+    while (guard++ < 140) {
       const st = await D(p, 'state');
-      if (st === 'TREK_SELECT') { await D(p, 'click', cardX[trekN], 290); continue; }
+      if (st === 'TREK_SELECT') { await clickCard(p, trekN); continue; }
       if (st === 'SITE_INTRO') { await D(p, 'warp', 2); continue; }
       if (st === 'HUNTING') {
         if (envShot[trekN]) { await D(p, 'warp', 3); await p.screenshot({ path: `${SHOTS}/${envShot[trekN]}` }); delete envShot[trekN]; }
@@ -247,6 +259,7 @@ async function main() {
       if (st === 'SITE_RESULTS' || st === 'TREK_RESULTS') { await D(p, 'click', 480, 300); continue; }
       if (st === 'BONUS') {
         if (trekN === 0) { await D(p, 'warp', 4); await p.screenshot({ path: `${SHOTS}/08-bonus-ducks.png` }); }
+        if (bonusShot[trekN]) { await D(p, 'warp', 4); await p.screenshot({ path: `${SHOTS}/${bonusShot[trekN]}` }); delete bonusShot[trekN]; }
         await playBonus(p);
         continue;
       }
@@ -254,27 +267,70 @@ async function main() {
       if (st === 'FINAL_RESULTS') break;
       await D(p, 'warp', 0.5);
     }
-    ok('completes all 3 treks → FINAL_RESULTS', (await D(p, 'state')) === 'FINAL_RESULTS');
+    ok(`completes all ${trekCount} treks → FINAL_RESULTS`, (await D(p, 'state')) === 'FINAL_RESULTS');
+    ok('played every trek', trekN === trekCount, `trekN=${trekN}`);
     const finalScore = await D(p, 'score');
     ok('final score is substantial', finalScore > 20000, `score=${finalScore}`);
     await p.screenshot({ path: `${SHOTS}/09-final-results.png` });
     ok('no page errors across full game', p.errors.length === 0, p.errors.join(' | '));
 
-    // high-score entry
+    // high-score entry (names run up to 4 letters now)
     await D(p, 'click', 480, 300);
     ok('qualifying score → HISCORE_ENTRY', (await D(p, 'state')) === 'HISCORE_ENTRY');
-    for (const k of ['D', 'H', 'X']) await D(p, 'key', k);
+    for (const k of ['D', 'H', 'X', 'L']) await D(p, 'key', k);
     await D(p, 'key', 'Enter');
     ok('initials confirm → HISCORES', (await D(p, 'state')) === 'HISCORES');
     const stored = await p.evaluate(() => JSON.parse(localStorage.getItem('dh.highscores') || '[]'));
-    ok('high score persisted to localStorage', stored.length === 1 && stored[0].initials === 'DHX' && stored[0].score === finalScore,
+    ok('4-letter name persisted to localStorage', stored.length === 1 && stored[0].initials === 'DHXL' && stored[0].score === finalScore,
        JSON.stringify(stored));
     await p.screenshot({ path: `${SHOTS}/10-hiscores.png` });
     // survives reload
     await p.reload();
     await p.waitForFunction(() => window.__DH && window.__DH.state() === 'TITLE');
     const stored2 = await p.evaluate(() => JSON.parse(localStorage.getItem('dh.highscores') || '[]'));
-    ok('high score survives reload', stored2.length === 1 && stored2[0].initials === 'DHX');
+    ok('high score survives reload', stored2.length === 1 && stored2[0].initials === 'DHXL');
+    await p.close();
+  }
+
+  // 6b — bonus minigames head-on: bottles smash for points, skunks cost you
+  {
+    const p = await newPage(HTTP);
+    await p.evaluate(() => { window.DH.G.trekIndex = 1; window.__DH.skipToState('BONUS'); });
+    await D(p, 'warp', 3.5);
+    const bottle = (await D(p, 'animals')).find((a) => a.shootable && a.state === 'fly' && a.onScreen);
+    ok('bottle blitz lobs bottles', !!bottle, JSON.stringify(await D(p, 'animals')));
+    const bScore = await D(p, 'score');
+    const bt = await leadClick(p, bottle);
+    await D(p, 'warp', bt + 0.1);
+    ok('smashed bottle pays 200', (await D(p, 'score')) === bScore + 200,
+       `delta=${(await D(p, 'score')) - bScore}`);
+
+    await p.evaluate(() => { window.DH.G.trekIndex = 2; window.__DH.skipToState('BONUS'); });
+    let racc = null, guard = 0;
+    while (!racc && guard++ < 40) {
+      await D(p, 'warp', 0.4);
+      racc = (await D(p, 'animals')).find((a) => a.shootable && a.state === 'up');
+    }
+    ok('critter alley pops raccoons', !!racc);
+    const rScore = await D(p, 'score');
+    await D(p, 'click', racc.x, racc.y);
+    await D(p, 'warp', 1.0);
+    ok('raccoon pays 300', (await D(p, 'score')) === rScore + 300,
+       `delta=${(await D(p, 'score')) - rScore}`);
+    // a skunk eventually pops and is flagged unshootable for bots
+    let skunk = null; guard = 0;
+    while (!skunk && guard++ < 60) {
+      await D(p, 'warp', 0.4);
+      skunk = (await D(p, 'animals')).find((a) => !a.shootable && a.state === 'up');
+    }
+    ok('skunks pop flagged as no-shoot', !!skunk);
+    const sScore = await D(p, 'score');
+    await D(p, 'rclick'); await D(p, 'warp', 0.7);
+    await D(p, 'click', skunk.x, skunk.y);
+    await D(p, 'warp', 1.0);
+    ok('shooting a skunk costs 500', (await D(p, 'score')) === sScore - 500,
+       `delta=${(await D(p, 'score')) - sScore}`);
+    ok('no page errors in minigames', p.errors.length === 0, p.errors.join(' | '));
     await p.close();
   }
 

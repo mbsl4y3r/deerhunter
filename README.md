@@ -30,15 +30,20 @@ python3 -m http.server 8000
 
 ### Structure
 
-- **3 treks**: Whitetail Ridge (forest), Elk Summit (mountain), Moose Marsh
-  (tundra) — 5 sites each, 3 bucks per site.
+- **4 treks**: Whitetail Ridge (forest), Elk Summit (mountain), Moose Marsh
+  (tundra), Wolf Creek (canyon — shoot the wolves, **never the pups**) —
+  5 sites each, 3 targets per site.
 - **Scoring**: base points × distance (far lanes pay 1.5×) × speed (running
   1.5×) × shot placement (head 1.5×, vitals 1.25×) × trophy rating (bigger
   antlers pay more).
+- **Critters**: squirrels and rabbits wander through — pick them off for
+  bonus points. Skunks cost you. Birds are just birds; gunfire scatters them.
 - **Bonuses**: per-site accuracy bonus, three-buck bonus, perfect-trek bonus
-  (all 15 bucks), and a **Duck Flush** bonus round after each trek.
+  (all 15), and a rotating **bonus minigame** after each trek — Duck Flush,
+  Bottle Blitz (smash lobbed moonshine), or Critter Alley (pop-up raccoons,
+  spare the skunks).
 - **High scores** are kept in your browser (localStorage), arcade-style
-  3-letter initials.
+  names up to 4 letters.
 
 ## Custom art (optional)
 

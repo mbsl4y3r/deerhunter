@@ -261,6 +261,104 @@ DH.background = (() => {
       };
       return { sky, layers, front, cloud: 'rgba(235,235,240,0.6)' };
     },
+
+    canyon: (rng) => {
+      const layers = [];
+      layers.push({ par: 0.08, c: makeLayer((g) => {
+        // flat-topped mesas in evening haze
+        for (const [yB, col] of [[255, '#b07a63'], [288, '#96604d']]) {
+          let x = -M - 40;
+          while (x < W + M) {
+            const mw = 120 + rng() * 200, mh = 60 + rng() * 70, slope = 18 + rng() * 14;
+            g.fillStyle = col;
+            g.beginPath();
+            g.moveTo(x, yB + 50);
+            g.lineTo(x + slope, yB - mh);
+            g.lineTo(x + mw - slope, yB - mh);
+            g.lineTo(x + mw, yB + 50);
+            g.closePath(); g.fill();
+            x += mw + 24 + rng() * 60;
+          }
+        }
+      })});
+      layers.push({ par: 0.22, c: makeLayer((g) => {
+        // canyon wall band with strata lines + rim junipers
+        ridge(g, rng, 298, 16, 10, '#8a523c', 332);
+        g.strokeStyle = 'rgba(60,30,20,0.25)';
+        g.lineWidth = 2;
+        for (let i = 0; i < 5; i++) {
+          g.beginPath();
+          g.moveTo(-M, 306 + i * 5 + rng() * 3);
+          g.lineTo(W + M, 306 + i * 5 + rng() * 3);
+          g.stroke();
+        }
+        for (let i = 0; i < 22; i++) {
+          pine(g, -M + rng() * (W + M * 2), 306 + rng() * 6, 26 + rng() * 22,
+               ['#4a5a38', '#3d4d30', '#556246'][Math.floor(rng() * 3)]);
+        }
+      })});
+      layers.push({ par: 0.5, c: makeLayer((g) => {
+        grad(g, -M, 300, W + M * 2, H - 300, [[0, '#c29066'], [0.5, '#a97a54'], [1, '#8a6244']]);
+        // the creek: a winding band of cool water through the wash
+        g.fillStyle = '#7fa3ab';
+        g.beginPath();
+        let cy0 = 352 + rng() * 14;
+        g.moveTo(-M, cy0);
+        for (let x = -M; x <= W + M; x += 90) {
+          g.quadraticCurveTo(x + 45, cy0 + (rng() - 0.5) * 22, x + 90, cy0 + (rng() - 0.5) * 10);
+        }
+        g.lineTo(W + M, cy0 + 16 + rng() * 8);
+        for (let x = W + M; x >= -M; x -= 90) {
+          g.quadraticCurveTo(x - 45, cy0 + 20 + (rng() - 0.5) * 20, x - 90, cy0 + 15 + (rng() - 0.5) * 10);
+        }
+        g.closePath();
+        g.fill();
+        g.fillStyle = 'rgba(255,255,255,0.3)';
+        for (let i = 0; i < 12; i++) {
+          g.fillRect(-M + rng() * (W + M * 2), 352 + rng() * 22, 14 + rng() * 40, 1.4);
+        }
+        for (let i = 0; i < 20; i++) {                       // river stones + dry rocks
+          g.fillStyle = ['rgba(120,90,70,0.55)', 'rgba(150,115,88,0.55)'][Math.floor(rng() * 2)];
+          g.beginPath();
+          g.ellipse(-M + rng() * (W + M * 2), 400 + rng() * 130, 8 + rng() * 20, 4 + rng() * 8, rng(), 0, Math.PI * 2);
+          g.fill();
+        }
+        tufts(g, rng, 340, 520, 70, ['#8a7a4a', '#9a8a58', '#76683e']);
+      })});
+      const front = makeLayer((g) => {
+        // dark rimrock and dry brush right at the camera
+        ridge(g, rng, 514, 14, 12, '#4a3226', H);
+        g.strokeStyle = '#3a2a1e';
+        g.lineWidth = 2;
+        for (let i = 0; i < 10; i++) {
+          const x = -M + rng() * (W + M * 2), y = 540 - rng() * 10;
+          for (let b = 0; b < 5; b++) {
+            g.beginPath();
+            g.moveTo(x, y);
+            const a = -Math.PI / 2 + (rng() - 0.5) * 1.7, l = 16 + rng() * 24;
+            g.quadraticCurveTo(x + Math.cos(a) * l * 0.5, y + Math.sin(a) * l * 0.7,
+                               x + Math.cos(a) * l, y + Math.sin(a) * l);
+            g.stroke();
+          }
+        }
+        for (let i = 0; i < 4; i++) {                        // rim boulders
+          const x = -M + rng() * (W + M * 2);
+          g.fillStyle = '#54382a';
+          g.beginPath();
+          g.ellipse(x, 540, 24 + rng() * 30, 16 + rng() * 14, 0, Math.PI, Math.PI * 2);
+          g.fill();
+        }
+      });
+      const sky = (ctx) => {
+        // golden-hour desert sky
+        grad(ctx, 0, 0, W, 330, [[0, '#7a5a7a'], [0.45, '#c97a52'], [1, '#f2c988']]);
+        ctx.fillStyle = 'rgba(255,220,160,0.9)';
+        ctx.beginPath(); ctx.arc(W * 0.28, 235, 40, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,220,160,0.25)';
+        ctx.beginPath(); ctx.arc(W * 0.28, 235, 62, 0, Math.PI * 2); ctx.fill();
+      };
+      return { sky, layers, front, cloud: 'rgba(255,225,200,0.45)' };
+    },
   };
 
   // Painted-art layer placement: how source rows map onto the 540-high scene.
@@ -277,7 +375,7 @@ DH.background = (() => {
   // and the mid band rides lower so the marsh lake peeks over the ground line
   const ART_LAYOUT_ENV = {
     tundra: {
-      far: { par: 0.08, mode: 'band', srcY0: 205, srcY1: 400, dstY0: 90, dstY1: 295 },
+      far: { par: 0.08, mode: 'band', srcY0: 232, srcY1: 400, dstY0: 105, dstY1: 295 },
       mid: { par: 0.22, mode: 'tile', srcRow: 455, dstY: 322 },
     },
   };

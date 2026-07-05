@@ -5,12 +5,75 @@ DH.hunt = (() => {
   let bg = null;
   let animals = [];
   let spawnQueue = [];
+  let critters = [];
+  let critterQueue = [];
   let t = 0;
   let site = null, trek = null;
   let stats = null;
   let endT = null;            // countdown to SITE_RESULTS once the site is decided
   let doeFlash = 0;
   let siteToken = 0;          // stale-bullet guard: impacts from a previous site are ignored
+
+  // seeded per site: bird flocks drift by, and the odd squirrel, rabbit or
+  // skunk wanders through the foreground (classic small-game targets)
+  function buildCritterSchedule() {
+    const rng = DH.G.rng;
+    const q = [];
+    const n = 2 + Math.floor(rng() * 3);
+    for (let i = 0; i < n; i++) {
+      const roll = rng();
+      const type = roll < 0.4 ? 'bird' : roll < 0.62 ? 'squirrel' : roll < 0.82 ? 'rabbit' : 'skunk';
+      q.push({
+        t: 2 + rng() * Math.max(6, site.duration - 9),
+        type,
+        side: rng() < 0.5 ? 'L' : 'R',
+        count: type === 'bird' ? 3 + Math.floor(rng() * 3) : 1,
+        spawned: false,
+      });
+    }
+    return q;
+  }
+
+  function spawnCritters(ev) {
+    const rng = DH.G.rng;
+    for (let i = 0; i < ev.count; i++) {
+      critters.push(new DH.entities.Critter({
+        type: ev.type,
+        side: ev.side,
+        y: ev.type === 'bird' ? 60 + rng() * 110 + i * 12 : 462 + rng() * 34,
+      }));
+      if (ev.type === 'bird') critters[critters.length - 1].x -= i * (34 + rng() * 20) * (ev.side === 'L' ? 1 : -1);
+    }
+  }
+
+  // small-game hit: points for squirrels/rabbits, a smelly penalty for skunks
+  function critterImpact(x, y) {
+    for (const c of critters) {
+      const hit = c.hitTest(x, y);
+      if (!hit) continue;
+      c.kill();
+      DH.entities.spawnPuff(x, y, 0.5);
+      if (c.type === 'skunk') {
+        const pen = DH.data.scoring.skunkPenalty;
+        DH.G.score += pen;
+        stats.critterPts += pen;
+        DH.entities.spawnStink(c.x, c.y);
+        DH.entities.spawnPopup(x, y - 24, DH.util.fmtScore(pen), '#9dbf4e');
+        DH.hud.banner('P.U.! NOT THE SKUNK!', '#9dbf4e', 1.4);
+        DH.audio.play('buzzer');
+      } else {
+        const pts = DH.data.scoring.critterPoints[c.type] || 250;
+        DH.G.score += pts;
+        stats.critterPts += pts;
+        const cash = DH.shop.earn(pts);
+        stats.cash += cash;
+        DH.entities.spawnPopup(x, y - 24, '+' + pts + ' CRITTER!', '#8fd3ff');
+        DH.audio.play('thud');
+      }
+      return true;
+    }
+    return false;
+  }
 
   function spawn(cfg) {
     const a = new DH.entities.Animal({
@@ -61,6 +124,7 @@ DH.hunt = (() => {
       doeHit: stats.doeHit,
       penalty: stats.doeHit ? sc.doePenalty : 0,
       cash: stats.cash,
+      critterPts: stats.critterPts,
     };
     DH.G.score += rec.accBonus + rec.threeBuckBonus;
     DH.G.trekRecords.push(rec);
@@ -71,6 +135,7 @@ DH.hunt = (() => {
   function impact(x, y) {
     const res = DH.shooting.resolveImpact(x, y, animals.filter((a) => a.alive));
     if (!res) {
+      if (critterImpact(x, y)) { stats.hits++; return; }
       if (y > 290) DH.entities.spawnDust(x, y, 0.7);        // dirt kick on the ground
       else if (y > 130) DH.entities.spawnLeaves(x, y);      // rustle the canopy
       return;
@@ -91,7 +156,7 @@ DH.hunt = (() => {
                              res.part === 'head' ? '#ffe97a' : '#ffd94d');
       DH.entities.spawnPopup(x, y + 6, '+$' + DH.util.fmtScore(cash), '#7ac96b');
       if (a.trophy >= 5) {
-        DH.hud.banner('MONSTER BUCK!', '#ffd94d', 1.2);
+        DH.hud.banner(a.def.monsterBanner || 'MONSTER BUCK!', '#ffd94d', 1.2);
         DH.G.timeScale = 0.3;                       // savor the trophy
       } else if (res.part === 'head') {
         DH.hud.banner('TROPHY SHOT!', '#ffe97a', 1.0);
@@ -104,7 +169,7 @@ DH.hunt = (() => {
       doeFlash = 1;
       DH.audio.play('buzzer');
       DH.entities.spawnPopup(x, y - 30, DH.util.fmtScore(DH.data.scoring.doePenalty), '#ff5a4a');
-      DH.hud.banner("DON'T SHOOT THE DOES!", '#ff5a4a', 1.6);
+      DH.hud.banner(a.def.doeWarn || "DON'T SHOOT THE DOES!", '#ff5a4a', 1.6);
     }
   }
 
@@ -117,10 +182,12 @@ DH.hunt = (() => {
       bg = DH.background.build(trek.env, DH.G.seed + DH.G.trekIndex * 100 + DH.G.siteIndex * 7);
       animals = [];
       spawnQueue = site.spawns.map((s) => Object.assign({ spawned: false, animal: null }, s));
+      critters = [];
+      critterQueue = buildCritterSchedule();
       t = 0;
       endT = null;
       doeFlash = 0;
-      stats = { shots: 0, hits: 0, kills: [], doeHit: false, cash: 0 };
+      stats = { shots: 0, hits: 0, kills: [], doeHit: false, cash: 0, critterPts: 0 };
       DH.shooting.reset();
       DH.entities.clearParticles();
       DH.audio.startAmbient(trek.env);
@@ -140,7 +207,12 @@ DH.hunt = (() => {
           s.animal = spawn(s);
         }
       }
+      for (const s of critterQueue) {
+        if (!s.spawned && t >= s.t) { s.spawned = true; spawnCritters(s); }
+      }
       for (const a of animals) a.update(dt);
+      for (const c of critters) c.update(dt);
+      critters = critters.filter((c) => !c.gone);
       // spawnQueue keeps references for scoring; the live list only draws/updates
       animals = animals.filter((a) => a.state !== 'dead' && !a.escaped);
       DH.entities.updateParticles(dt);
@@ -181,7 +253,10 @@ DH.hunt = (() => {
         if (token !== siteToken || DH.G.stateName !== 'HUNTING' || stats.doeHit) return;
         impact(ix, iy);
       });
-      if (res.fired) stats.shots++;
+      if (res.fired) {
+        stats.shots++;
+        for (const c of critters) c.scatter();   // gunfire clears the sky
+      }
     },
 
     onRclick() { DH.shooting.reload(); },
@@ -193,8 +268,10 @@ DH.hunt = (() => {
 
     render(ctx) {
       bg.render(ctx, DH.G.camX, t);
+      for (const c of critters) if (c.type === 'bird') c.draw(ctx);      // sky traffic
       const sorted = [...animals].sort((a, b) => a.lane.depth - b.lane.depth);
       for (const a of sorted) a.draw(ctx);
+      for (const c of critters) if (c.type !== 'bird') c.draw(ctx);      // foreground critters
       DH.entities.drawParticles(ctx);
       bg.renderFront(ctx, DH.G.camX);
       DH.shooting.drawShots(ctx);
