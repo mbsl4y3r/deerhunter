@@ -110,10 +110,15 @@ DH.data = (() => {
       },
       doeP: { coat: '#5d4736', coatDark: '#463527', headC: '#4e3c2e' },
       antlerStyle: 'palmate',
-      hitboxes: [
-        { part: 'head',   cx: 62, cy: -88, rx: 23, ry: 20 },
-        { part: 'vitals', cx: 20, cy: -64, rx: 24, ry: 21 },
-        { part: 'body',   cx: -6, cy: -60, rx: 52, ry: 30 },
+      hitboxes: [                       // calibrated to the painted bull
+        { part: 'head',   cx: 68, cy: -85, rx: 25, ry: 21, gx: 72, gy: -62 },
+        { part: 'vitals', cx: 22, cy: -64, rx: 24, ry: 21 },
+        { part: 'body',   cx: -8, cy: -60, rx: 64, ry: 32 },
+      ],
+      hitboxesDoe: [
+        { part: 'head',   cx: 71, cy: -96, rx: 20, ry: 17, gx: 68, gy: -48 },
+        { part: 'vitals', cx: 20, cy: -62, rx: 21, ry: 18 },
+        { part: 'body',   cx: -8, cy: -58, rx: 58, ry: 28 },
       ],
     },
     duck: {

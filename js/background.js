@@ -270,7 +270,16 @@ DH.background = (() => {
     far:    { par: 0.08, mode: 'band', srcY0: 140, srcY1: 432, dstY0: 55, dstY1: 333 },
     mid:    { par: 0.22, mode: 'tile', srcRow: 445, dstY: 340 },   // mirror-tiled half scale
     ground: { par: 0.5,  mode: 'anchor', srcRow: 0, dstY: 288 },
-    frontTiles: { mountain: 3 },       // per-env fringe density
+    frontTiles: { mountain: 3, tundra: 3 },   // per-env fringe density
+  };
+  // per-env band geometry where the painted layers don't match the defaults:
+  // the tundra far band skips its magenta-blend gradient rows (pink residue),
+  // and the mid band rides lower so the marsh lake peeks over the ground line
+  const ART_LAYOUT_ENV = {
+    tundra: {
+      far: { par: 0.08, mode: 'band', srcY0: 205, srcY1: 400, dstY0: 90, dstY1: 295 },
+      mid: { par: 0.22, mode: 'tile', srcRow: 455, dstY: 322 },
+    },
   };
 
   // mirror every other tile so the seam edges always match; phase-shift the
@@ -299,7 +308,8 @@ DH.background = (() => {
     const def = front ? null : ENVS[env](rng);   // procedural brush only as fallback
 
     function drawLayer(ctx, key, camX) {
-      const img = imgs[key], L = ART_LAYOUT[key];
+      const img = imgs[key];
+      const L = (ART_LAYOUT_ENV[env] && ART_LAYOUT_ENV[env][key]) || ART_LAYOUT[key];
       const x = -M - camX * L.par;
       if (L.mode === 'tile') {
         const tw = Math.ceil((W + 2 * M) / 2);

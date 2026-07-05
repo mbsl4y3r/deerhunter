@@ -40,6 +40,18 @@ const LAYERS = [
     patch: { x: 900, y: 145, w: 70, h: 70, fromX: 800 },   // post-crop coords
     cropY0: 300,     // drop the tall pine tops so the rim stays a rim
     fadeTop: 90 },   // feather the crop edge so the rim melts into the grass
+  // Moose Marsh (env 'tundra') — generated at 1376×768, same aspect as the
+  // 1024×572 layout space every other trek uses; resize normalizes them so
+  // ART_LAYOUT's row numbers keep meaning the same thing
+  { name: 'tundra_sky',    file: 'tundra_sky.png',    key: false, q: 0.82, resize: [1024, 572],
+    patch: { x: 908, y: 452, w: 54, h: 54, fromX: 815 } },
+  { name: 'tundra_far',    file: 'tundra_far.png',    key: true,  q: 0.82, resize: [1024, 572] },
+  { name: 'tundra_mid',    file: 'tundra_mid.png',    key: true,  q: 0.85, resize: [1024, 572] },
+  { name: 'tundra_ground', file: 'tundra_ground.png', key: false, q: 0.85, resize: [1024, 572],
+    cropY0: 75,    // the marsh painting carries its own sky + hills — cut them
+    patch: { x: 905, y: 375, w: 58, h: 56, fromX: 800 } },   // post-crop coords
+  { name: 'tundra_front',  file: 'tundra_front.png',  key: true,  q: 0.82, resize: [1024, 572],
+    patch: { x: 900, y: 446, w: 58, h: 58, fromX: 795 } },
 ];
 
 // 3-row × 2-column six-cell grid (for smoother 6-frame walk/run sheets)
@@ -186,6 +198,40 @@ SHEETS.push(
     box: EBOX, fill: 0.6, fit: 'h', lineErase: false },
 );
 
+// Moose cast. Bull sheets are 2x3 (Q6) with a 2x2 death; the cow's smaller
+// fills keep her body height matched to the bull's (his box height includes
+// the palmate rack). The death sheets' sparkle watermark lands on the dead
+// moose's head in the last quadrant — desparkle inpaints it there only.
+const MOBOX = { w: 202, h: 185 };
+SHEETS.push(
+  { file: 'moose_bull_walk_sheet.png', boxes: Q6,
+    names: ['moose_buck_walk_0', 'moose_buck_walk_1', 'moose_buck_walk_2', 'moose_buck_walk_3', 'moose_buck_walk_4', 'moose_buck_walk_5'],
+    box: MOBOX, fill: 0.95, fit: 'h', lineErase: false },
+  { file: 'moose_bull_run_sheet.png', boxes: Q6,
+    names: ['moose_buck_run_0', 'moose_buck_run_1', 'moose_buck_run_2', 'moose_buck_run_3', 'moose_buck_run_4', 'moose_buck_run_5'],
+    box: MOBOX, fill: 0.95, fit: 'h', lineErase: false },
+  { file: 'moose_bull_graze.png', cells: 1, take: [0],
+    names: ['moose_buck_graze'],
+    box: MOBOX, fill: 0.9, fit: 'w', lineErase: false },
+  { file: 'moose_bull_death_sheet.png', boxes: Q,
+    names: ['moose_buck_death_0', 'moose_buck_death_1', 'moose_buck_death_2', 'moose_buck_death_3'],
+    box: MOBOX, fill: 0.95, fit: 'h', lineErase: false,
+    desparkle: { 3: [350, 347, 424, 424] } },
+  { file: 'moose_cow_walk_sheet.png', boxes: Q6,
+    names: ['moose_doe_walk_0', 'moose_doe_walk_1', 'moose_doe_walk_2', 'moose_doe_walk_3', 'moose_doe_walk_4', 'moose_doe_walk_5'],
+    box: MOBOX, fill: 0.85, fit: 'h', lineErase: false },
+  { file: 'moose_cow_run_sheet.png', boxes: Q6,
+    names: ['moose_doe_run_0', 'moose_doe_run_1', 'moose_doe_run_2', 'moose_doe_run_3', 'moose_doe_run_4', 'moose_doe_run_5'],
+    box: MOBOX, fill: 0.82, fit: 'h', lineErase: false },
+  { file: 'moose_cow_graze.png', cells: 1, take: [0],
+    names: ['moose_doe_graze'],
+    box: MOBOX, fill: 0.85, fit: 'w', lineErase: false },
+  { file: 'moose_cow_death_sheet.png', boxes: Q,
+    names: ['moose_doe_death_0', 'moose_doe_death_1', 'moose_doe_death_2', 'moose_doe_death_3'],
+    box: MOBOX, fill: 0.85, fit: 'h', lineErase: false,
+    desparkle: { 3: [348, 313, 424, 424] } },
+);
+
 // Trek-select dressing. The frame stretches non-uniformly to its box
 // (stretch: true) — it's border decor, the distortion is invisible on wood
 // beams. Its sparkle watermark sits over the bottom-right antler ornament,
@@ -194,7 +240,7 @@ SHEETS.push(
 SHEETS.push(
   { file: 'card_frame.png', boxes: [{ x0: 0, x1: 687, y0: 0, y1: 1024 }],
     names: ['card_frame'], box: { w: 468, h: 555 }, stretch: true,
-    lineErase: false, desparkle: [554, 896, 622, 960] },
+    lineErase: false, desparkle: { 0: [554, 896, 622, 960] } },
   { file: 'badge_deer.png', boxes: [{ x0: 0, x1: 1024, y0: 0, y1: 1024 }],
     names: ['badge_deer'], box: { w: 168, h: 168 }, fill: 0.98, fit: 'h', lineErase: false },
   { file: 'badge_elk.png', boxes: [{ x0: 0, x1: 1024, y0: 0, y1: 1024 }],
@@ -213,10 +259,13 @@ for (const L of LAYERS) {
     const img = new Image();
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = src; });
     const cropY0 = cfg.cropY0 || 0;
+    const rw = cfg.resize ? cfg.resize[0] : img.naturalWidth;
+    const rh = cfg.resize ? cfg.resize[1] : img.naturalHeight;
     const c = document.createElement('canvas');
-    c.width = img.naturalWidth; c.height = img.naturalHeight - cropY0;
+    c.width = rw; c.height = rh - cropY0;
     const g = c.getContext('2d');
-    g.drawImage(img, 0, -cropY0);
+    g.imageSmoothingQuality = 'high';
+    g.drawImage(img, 0, -cropY0, rw, rh);
 
     if (cfg.patch) {
       const p = cfg.patch;
@@ -301,8 +350,8 @@ for (const S of SHEETS) {
       // real art: flag low-saturation bright pixels inside the given rect,
       // dilate to catch the soft edge, then refill each column by lerping
       // between the untouched colors above and below the flagged run
-      if (cfg.desparkle) {
-        const [rx0, ry0, rx1, ry1] = cfg.desparkle;
+      if (cfg.desparkle && cfg.desparkle[fi]) {
+        const [rx0, ry0, rx1, ry1] = cfg.desparkle[fi];
         const flag = new Uint8Array(cw * ch);
         for (let y = ry0; y <= ry1; y++) {
           for (let x = rx0; x <= rx1; x++) {
