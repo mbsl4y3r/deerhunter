@@ -71,6 +71,9 @@ DH.shop = (() => {
     bulletSpeed: () => gun().bullet * (has('barrel') ? 1.25 : 1),
     scoreMult: () => gun().scoreMult || 1,
     ammo: () => gun().ammo,
+    scoped: () => gun().scope === true,
+    zoom: () => gun().zoom || 2,
+    slowmo: () => gun().slowmo || 0.4,
     drawGunIcon: (ctx, style) => drawGun(ctx, style, 0, 0, 1),
     _reset: () => { S = defaults(); save(); },
   };
@@ -168,7 +171,7 @@ DH.shop = (() => {
       // guns column
       L(ctx, 'GUNS', CX - 355, 112, 16, '#f2ead0');
       DH.data.guns.forEach((g, i) => {
-        const r = { x: CX - 365, y: 124 + i * 62, w: 445, h: 56, kind: 'gun', id: g.id };
+        const r = { x: CX - 365, y: 124 + i * 56, w: 445, h: 51, kind: 'gun', id: g.id };
         rows.push(r);
         const owned = api.owns(g.id);
         const equipped = DH.shop.equipped === g.id;
@@ -179,13 +182,13 @@ DH.shop = (() => {
         ctx.lineWidth = 2;
         ctx.strokeStyle = equipped ? '#7ac96b' : owned ? '#c9a54a' : afford ? '#8a7a55' : '#4a4238';
         ctx.stroke();
-        DH.assets.draw(ctx, `gun_${g.id}`, r.x + 52, r.y + 28, { scale: 0.95 });
-        L(ctx, g.name, r.x + 108, r.y + 22, 15, owned ? '#f2ead0' : afford ? '#e8dcc0' : '#8a8070');
-        L(ctx, g.desc, r.x + 108, r.y + 38, 10, '#9a8f78');
+        DH.assets.draw(ctx, `gun_${g.id}`, r.x + 52, r.y + 26, { scale: 0.9 });
+        L(ctx, g.name, r.x + 108, r.y + 20, 14, owned ? '#f2ead0' : afford ? '#e8dcc0' : '#8a8070');
+        L(ctx, g.desc, r.x + 108, r.y + 34, 9.5, '#9a8f78');
         L(ctx, `CAP ${g.shells} · VEL ${g.bullet} · ROF ${Math.round(1 / g.cooldown)}/s`,
-          r.x + 108, r.y + 50, 9, '#7a7260');
+          r.x + 108, r.y + 46, 9, '#7a7260');
         L(ctx, equipped ? 'EQUIPPED' : owned ? 'EQUIP' : `$${DH.util.fmtScore(g.price)}`,
-          r.x + r.w - 12, r.y + 34, 14, equipped ? '#7ac96b' : owned ? '#ffd94d' : afford ? '#7ac96b' : '#8a5a4a', 'right');
+          r.x + r.w - 12, r.y + 31, 14, equipped ? '#7ac96b' : owned ? '#ffd94d' : afford ? '#7ac96b' : '#8a5a4a', 'right');
       });
 
       // upgrades column
@@ -230,7 +233,13 @@ DH.shop = (() => {
       if (DH.hud.muteHit(x, y)) { DH.audio.toggleMute(); return; }
       for (const r of rows) {
         if (x < r.x || x > r.x + r.w || y < r.y || y > r.y + r.h) continue;
-        if (r.kind === 'back') { DH.audio.play('ui'); DH.setState('TREK_SELECT'); return; }
+        if (r.kind === 'back') {
+          DH.audio.play('ui');
+          const ret = DH.G.shopReturn || 'TREK_SELECT';
+          DH.G.shopReturn = null;
+          DH.setState(ret);
+          return;
+        }
         if (r.kind === 'gun') {
           if (DH.shop.equipped === r.id) return;
           if (api.owns(r.id)) { equip(r.id); flash('EQUIPPED', true); }
@@ -246,7 +255,13 @@ DH.shop = (() => {
         }
       }
     },
-    onKey(k) { if (k === 'Escape') DH.setState('TREK_SELECT'); },
+    onKey(k) {
+      if (k === 'Escape') {
+        const ret = DH.G.shopReturn || 'TREK_SELECT';
+        DH.G.shopReturn = null;
+        DH.setState(ret);
+      }
+    },
   };
 
   return api;

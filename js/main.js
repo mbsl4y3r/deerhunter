@@ -5,6 +5,10 @@ DH.main = (() => {
   const seed = parseInt(params.get('seed'), 10) || Math.floor(Math.random() * 1e9);
   const testMode = params.get('test') === '1';
   if (params.get('nosound') === '1') DH.audio.disable();
+  // ?rich=1 — tester wallet: tops the persistent shop cash up to $5,000,000
+  if (params.get('rich') != null && DH.shop.cash < 5000000) {
+    DH.shop.earn((5000000 - DH.shop.cash) * 5);
+  }
 
   // Logical height is fixed at 540; logical width stretches to the device
   // aspect (capped) so wide phones get a full-bleed scene instead of bars.
@@ -57,14 +61,18 @@ DH.main = (() => {
     DH.hud.syncScore();
   }
 
+  // returns true when the current state had a handler for the event
   function dispatch(type, a, b) {
-    if (!cur) return;
-    if (type === 'key' && (a === 'm' || a === 'M')) { DH.audio.toggleMute(); return; }
-    if (type === 'key' && (a === 'f' || a === 'F')) { toggleFullscreen(); return; }
-    if (type === 'click' && DH.hud.fsHit(a, b)) { toggleFullscreen(); return; }
-    if (type === 'click' && cur.onClick) cur.onClick(a, b);
-    else if (type === 'rclick' && cur.onRclick) cur.onRclick(a, b);
-    else if (type === 'key' && cur.onKey) cur.onKey(a);
+    if (!cur) return false;
+    if (type === 'key' && (a === 'm' || a === 'M')) { DH.audio.toggleMute(); return true; }
+    if (type === 'key' && (a === 'f' || a === 'F')) { toggleFullscreen(); return true; }
+    if ((type === 'click' || type === 'press') && DH.hud.fsHit(a, b)) { toggleFullscreen(); return true; }
+    if (type === 'click' && cur.onClick) { cur.onClick(a, b); return true; }
+    if (type === 'press' && cur.onPress) { cur.onPress(a, b); return true; }
+    if (type === 'release' && cur.onRelease) { cur.onRelease(a, b); return true; }
+    if (type === 'rclick' && cur.onRclick) { cur.onRclick(a, b); return true; }
+    if (type === 'key' && cur.onKey) { cur.onKey(a); return true; }
+    return false;
   }
 
   let fsFallback = false;   // set when the API rejected; next tap pops out
@@ -130,8 +138,8 @@ DH.main = (() => {
     }
     if (cur && cur.render) cur.render(ctx);
     ctx.restore();
-    // crosshair-as-cursor on every screen
-    DH.hud.drawCrosshair(ctx);
+    // crosshair-as-cursor on every screen (the scope draws its own reticle)
+    if (!DH.G.scopeView) DH.hud.drawCrosshair(ctx);
   }
 
   let last = 0;
@@ -241,6 +249,11 @@ DH.main = (() => {
         },
         flightTime: (x, y) => DH.shooting.flightTime(x, y),
         click: (x, y) => { DH.input.mouse.x = x; DH.input.mouse.y = y; dispatch('click', x, y); },
+        press: (x, y) => {
+          DH.input.mouse.x = x; DH.input.mouse.y = y;
+          if (!dispatch('press', x, y)) dispatch('click', x, y);
+        },
+        release: (x, y) => { DH.input.mouse.x = x; DH.input.mouse.y = y; dispatch('release', x, y); },
         rclick: () => dispatch('rclick', 0, 0),
         key: (k) => dispatch('key', k),
         warp: (sec) => {

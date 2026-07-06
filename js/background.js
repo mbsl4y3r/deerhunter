@@ -424,8 +424,10 @@ DH.background = (() => {
 
     return {
       render(ctx, camX) {
-        const ss = W / sky.width;
-        ctx.drawImage(sky, 0, 0, W, sky.height * ss);
+        // stretch to the full scene: painted skies vary in aspect (and some
+        // get their dead top rows cropped), and a soft vertical stretch on a
+        // sky gradient is invisible while an uncovered strip is not
+        ctx.drawImage(sky, 0, 0, W, 540);
         drawLayer(ctx, 'far', camX);
         drawLayer(ctx, 'mid', camX);
         drawLayer(ctx, 'ground', camX);

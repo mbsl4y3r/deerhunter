@@ -36,6 +36,9 @@ DH.data = (() => {
       price: 45000, shells: 3, reload: 0.65, cooldown: 0.30, bullet: 2650, ammo: 'rifle', scoreMult: 1.15 },
     { id: 'auto5',   name: 'AUTOMAG FIVE',   desc: 'Semi-auto speed demon', style: 'auto',
       price: 70000, shells: 5, reload: 0.55, cooldown: 0.07, bullet: 1600, ammo: 'shell' },
+    { id: 'scope98', name: 'MARKSMAN 98',    desc: 'HOLD to scope: zoom + slow time · +25% score', style: 'bolt',
+      price: 120000, shells: 3, reload: 0.70, cooldown: 0.35, bullet: 3000, ammo: 'rifle',
+      scoreMult: 1.25, scope: true, zoom: 2.1, slowmo: 0.4 },
   ];
   const upgrades = [
     { id: 'slick',   name: 'SLICK ACTION',  desc: '35% faster reload',    price: 6000 },

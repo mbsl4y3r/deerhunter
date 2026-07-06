@@ -341,57 +341,161 @@ DH.screens = (() => {
     onClick() { DH.setState('HUNTING'); },
   };
 
-  // ---------- SITE RESULTS ----------
+  // ---------- SITE RESULTS — the SHOT REPORT ----------
   let rec = null, resT = 0;
 
+  // species portrait chip: painted badge medallion when it exists, else the
+  // walking sprite framed head-first in a little wooden tile
+  function portrait(ctx, x, y, sp, size) {
+    const badge = DH.assets.get(`badge_${sp}`);
+    if (badge && badge.img) {
+      DH.assets.draw(ctx, `badge_${sp}`, x + size / 2, y + size / 2, { scale: size / badge.w });
+      return;
+    }
+    rr(ctx, x, y, size, size, 8);
+    ctx.save();
+    ctx.fillStyle = '#2a2117';
+    ctx.fill();
+    ctx.clip();
+    const def = DH.data.species[sp];
+    const head = (def.hitboxes || []).find((h) => h.part === 'head') || { cx: 0, cy: -60 };
+    const s = size / 110;
+    DH.assets.draw(ctx, `${sp}_buck_walk_0`, x + size / 2 - head.cx * s, y + size / 2 - head.cy * s,
+      { scale: s, trophy: 4 });
+    ctx.restore();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#c9a54a';
+    rr(ctx, x, y, size, size, 8);
+    ctx.stroke();
+  }
+
+  function reportButtons() {
+    const CX = DH.CX;
+    return [
+      { id: 'shop', label: 'UPGRADES', sub: 'SPEND YOUR CASH!', x: CX - 235, y: 462, w: 225, h: 58 },
+      { id: 'go', label: 'CONTINUE', sub: null, x: CX + 10, y: 462, w: 225, h: 58 },
+    ];
+  }
+
   DH.states.SITE_RESULTS = {
-    enter(r) { rec = r; resT = 0; if (!r.doeHit && r.kills.length === 3) DH.audio.play('fanfare'); },
+    enter(r) { rec = r || rec; resT = 0; if (rec && !rec.doeHit && rec.kills.length === 3) DH.audio.play('fanfare'); },
     update(dt) {
       resT += dt;
-      if (resT >= 5) advanceAfterSite();
+      if (resT >= 9) advanceAfterSite();
     },
     render(ctx) {
       const CX = DH.CX;
       fill(ctx);
-      panel(ctx, CX - 250, 46, 500, 448);
-      L(ctx, rec.doeHit ? 'SITE OVER!' : `SITE ${rec.siteIndex + 1} RESULTS`, CX, 96, 32,
-        rec.doeHit ? '#ff5a4a' : '#ffd94d', 'center');
-      let y = 146;
-      const spName = DH.data.species[DH.data.treks[DH.G.trekIndex].species].name;
+      panel(ctx, CX - 265, 14, 530, 510);
+      // header ribbon
+      ctx.fillStyle = '#1e3423';
+      rr(ctx, CX - 150, 28, 300, 42, 8);
+      ctx.fill();
+      L(ctx, '— SHOT REPORT —', CX, 57, 24, '#f2ead0', 'center');
+
+      // streak chip (left) · site total (center) · penalty chip (right)
+      ctx.fillStyle = '#10160f';
+      ctx.beginPath(); ctx.arc(CX - 200, 108, 34, 0, Math.PI * 2); ctx.fill();
+      ctx.lineWidth = 2.5; ctx.strokeStyle = '#c9a54a'; ctx.stroke();
+      L(ctx, 'STREAK', CX - 200, 87, 11, '#cfe3cf', 'center');
+      L(ctx, String(rec.streak || 0), CX - 200, 124, 30, '#ffd94d', 'center');
+
+      const siteTotal = rec.kills.reduce((s, k) => s + k.points, 0) + rec.accBonus +
+        rec.threeBuckBonus + rec.penalty + (rec.critterPts || 0);
+      L(ctx, (siteTotal >= 0 ? '+' : '') + fmtScore(siteTotal), CX, 118, 42,
+        siteTotal >= 0 ? '#ffd94d' : '#ff5a4a', 'center');
+      L(ctx, `SITE ${rec.siteIndex + 1} TOTAL`, CX, 142, 13, '#cfe3cf', 'center');
+
+      if (rec.doeHit) {
+        ctx.save();
+        ctx.translate(CX + 200, 104);
+        ctx.fillStyle = '#10160f';
+        ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
+        const dp = DH.data.species[rec.species || 'deer'];
+        L(ctx, (dp.doeName || 'DOE') + '!', 0, -38, 11, '#ff8a7a', 'center');
+        // the no-no ring
+        ctx.strokeStyle = '#c8402e';
+        ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-18, 18); ctx.lineTo(18, -18); ctx.stroke();
+        ctx.restore();
+        L(ctx, fmtScore(rec.penalty), CX + 200, 152, 18, '#ff5a4a', 'center');
+      }
+
+      // kill rows, BBH-style: portrait · name + stars + tags · points
+      let y = 168;
+      const spName = DH.data.species[rec.species || DH.data.treks[DH.G.trekIndex].species].name;
       if (rec.kills.length === 0) {
-        L(ctx, 'NO BUCKS TAKEN', CX, y + 10, 18, '#9ab59a', 'center');
-        y += 44;
+        L(ctx, rec.doeHit ? 'SITE CUT SHORT' : 'NOTHING TAKEN — THEY WALKED', CX, y + 26, 16, '#9ab59a', 'center');
+        y += 52;
       }
       for (const k of rec.kills) {
-        L(ctx, spName, CX - 200, y, 16, '#f2ead0');
-        stars(ctx, CX - 60, y, k.trophy, 15);
-        L(ctx, k.part.toUpperCase() + (k.running ? ' · RUNNING' : ''), CX + 65, y, 12, '#9ab59a');
-        L(ctx, '+' + fmtScore(k.points), CX + 200, y, 16, '#ffd94d');
-        y += 34;
+        ctx.fillStyle = 'rgba(10,16,11,0.75)';
+        rr(ctx, CX - 240, y, 480, 44, 8);
+        ctx.fill();
+        portrait(ctx, CX - 236, y + 2, k.species, 40);
+        L(ctx, spName, CX - 182, y + 20, 15, '#f2ead0');
+        stars(ctx, CX - 182, y + 37, k.trophy, 12);
+        const tags = [];
+        if (k.part === 'head') tags.push('PERFECT SHOT!');
+        else if (k.part === 'vitals') tags.push('VITALS');
+        if (k.running) tags.push('RUNNING');
+        if (tags.length) {
+          L(ctx, tags.join(' · '), CX + 40, y + 28, 11,
+            k.part === 'head' ? '#ffe97a' : '#9ab59a', 'center');
+        }
+        L(ctx, '+' + fmtScore(k.points), CX + 232, y + 29, 17,
+          k.part === 'head' ? '#ffe97a' : '#ffd94d', 'right');
+        y += 50;
       }
-      y += 8;
-      L(ctx, `SHOTS ${rec.shots} · HITS ${rec.hits} · ACCURACY ${Math.round(rec.accuracy * 100)}%`,
-        CX, y, 15, '#cfe3cf', 'center');
-      y += 32;
+
+      // bonus/penalty summary lines
+      y += 4;
+      const line = (labelTxt, valTxt, color) => {
+        L(ctx, labelTxt, CX - 235, y, 13, color);
+        L(ctx, valTxt, CX + 232, y, 13, color, 'right');
+        y += 22;
+      };
+      line(`ACCURACY ${Math.round(rec.accuracy * 100)}% (${rec.hits}/${rec.shots})`,
+        rec.accBonus ? '+' + fmtScore(rec.accBonus) : '—', '#cfe3cf');
+      if (rec.threeBuckBonus) line('CLEAN SWEEP — ALL THREE', '+' + fmtScore(rec.threeBuckBonus), '#7ac96b');
       if (rec.critterPts) {
-        const neg = rec.critterPts < 0;
-        L(ctx, 'CRITTERS', CX - 180, y, 15, neg ? '#9dbf4e' : '#8fd3ff');
-        L(ctx, (neg ? '' : '+') + fmtScore(rec.critterPts), CX + 170, y, 15, neg ? '#9dbf4e' : '#8fd3ff');
-        y += 28;
+        line('CRITTERS', (rec.critterPts > 0 ? '+' : '') + fmtScore(rec.critterPts),
+          rec.critterPts > 0 ? '#8fd3ff' : '#9dbf4e');
       }
-      if (rec.accBonus) { L(ctx, 'ACCURACY BONUS', CX - 180, y, 15, '#e8f0e8'); L(ctx, '+' + fmtScore(rec.accBonus), CX + 170, y, 15, '#ffd94d'); y += 28; }
-      if (rec.threeBuckBonus) { L(ctx, 'THREE BUCK BONUS', CX - 180, y, 15, '#e8f0e8'); L(ctx, '+' + fmtScore(rec.threeBuckBonus), CX + 170, y, 15, '#ffd94d'); y += 28; }
-      if (rec.doeHit) { L(ctx, 'DOE PENALTY', CX - 180, y, 15, '#ff5a4a'); L(ctx, fmtScore(rec.penalty), CX + 170, y, 15, '#ff5a4a'); y += 28; }
-      if (rec.cash) { L(ctx, 'CASH EARNED', CX - 180, y, 15, '#7ac96b'); L(ctx, '+$' + fmtScore(rec.cash), CX + 170, y, 15, '#7ac96b'); y += 28; }
-      const siteTotal = rec.kills.reduce((s, k) => s + k.points, 0) + rec.accBonus + rec.threeBuckBonus + rec.penalty + (rec.critterPts || 0);
-      L(ctx, 'SITE TOTAL', CX - 180, y + 8, 18, '#f2ead0');
-      L(ctx, (siteTotal >= 0 ? '+' : '') + fmtScore(siteTotal), CX + 170, y + 8, 18, siteTotal >= 0 ? '#ffd94d' : '#ff5a4a');
-      L(ctx, 'TAP TO CONTINUE', CX, 470, 14, '#fff', 'center');
+      if (rec.doeHit) line(`${(DH.data.species[rec.species || 'deer'].doeName || 'DOE')} PENALTY`, fmtScore(rec.penalty), '#ff5a4a');
+
+      // cash strip
+      ctx.fillStyle = '#152a1b';
+      rr(ctx, CX - 240, 408, 480, 42, 8);
+      ctx.fill();
+      L(ctx, 'CASH BALANCE', CX - 224, 435, 14, '#cfe3cf');
+      L(ctx, `$${fmtScore(DH.shop.cash)}`, CX - 60, 436, 20, '#7ac96b');
+      if (rec.cash) L(ctx, `+$${fmtScore(rec.cash)} THIS SITE`, CX + 228, 435, 13, '#9adf8b', 'right');
+
+      // buttons
+      for (const b of reportButtons()) {
+        DH.util.rr(ctx, b.x, b.y, b.w, b.h, 10);
+        ctx.fillStyle = b.id === 'shop' ? '#8a6a1e' : '#3a4a3e';
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = b.id === 'shop' ? '#ffd94d' : '#cfe3cf';
+        ctx.stroke();
+        L(ctx, b.label, b.x + b.w / 2, b.y + (b.sub ? 28 : 36), 20, '#fff', 'center');
+        if (b.sub) L(ctx, b.sub, b.x + b.w / 2, b.y + 46, 10, '#ffe9a0', 'center');
+      }
       DH.hud.draw(ctx, {});
     },
     onClick(x, y) {
       if (DH.hud.muteHit(x, y)) { DH.audio.toggleMute(); return; }
-      advanceAfterSite();
+      for (const b of reportButtons()) {
+        if (x < b.x || x > b.x + b.w || y < b.y || y > b.y + b.h) continue;
+        DH.audio.play('ui');
+        if (b.id === 'shop') { DH.G.shopReturn = 'SITE_RESULTS'; DH.setState('SHOP'); }
+        else advanceAfterSite();
+        return;
+      }
+      if (y < 450) advanceAfterSite();     // tap anywhere in the report continues
     },
   };
 

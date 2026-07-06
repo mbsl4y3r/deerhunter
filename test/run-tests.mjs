@@ -244,7 +244,7 @@ async function main() {
     await p.evaluate(() => localStorage.clear());
     const trekCount = await p.evaluate(() => window.DH.data.treks.length);
     await D(p, 'click', 480, 300);
-    let trekN = 0, guard = 0;
+    let trekN = 0, guard = 0, reportShot = false;
     const envShot = { 1: '06-hunting-mountain.png', 2: '07-hunting-tundra.png', 3: '12-hunting-canyon.png' };
     const bonusShot = { 1: '13-bonus-bottles.png', 2: '14-bonus-critters.png' };
     while (guard++ < 140) {
@@ -256,7 +256,15 @@ async function main() {
         await playSite(p);
         continue;
       }
-      if (st === 'SITE_RESULTS' || st === 'TREK_RESULTS') { await D(p, 'click', 480, 300); continue; }
+      if (st === 'SITE_RESULTS' || st === 'TREK_RESULTS') {
+        if (st === 'SITE_RESULTS' && !reportShot) {
+          reportShot = true;
+          await D(p, 'warp', 0.5);
+          await p.screenshot({ path: `${SHOTS}/15-shot-report.png` });
+        }
+        await D(p, 'click', 480, 300);
+        continue;
+      }
       if (st === 'BONUS') {
         if (trekN === 0) { await D(p, 'warp', 4); await p.screenshot({ path: `${SHOTS}/08-bonus-ducks.png` }); }
         if (bonusShot[trekN]) { await D(p, 'warp', 4); await p.screenshot({ path: `${SHOTS}/${bonusShot[trekN]}` }); delete bonusShot[trekN]; }
@@ -331,6 +339,42 @@ async function main() {
     ok('shooting a skunk costs 500', (await D(p, 'score')) === sScore - 500,
        `delta=${(await D(p, 'score')) - sScore}`);
     ok('no page errors in minigames', p.errors.length === 0, p.errors.join(' | '));
+    await p.close();
+  }
+
+  // 6c — scoped rifle: hold to scope (no shot), release fires; pause menu
+  {
+    const p = await newPage(HTTP + '&rich=1');
+    await p.evaluate(() => { window.DH.shop.buy('scope98'); });
+    ok('rich mode buys the Marksman 98', await p.evaluate(() => window.DH.shop.equipped === 'scope98'));
+    await D(p, 'click', 480, 300);
+    await clickCard(p, 0);
+    await D(p, 'warp', 2);
+    await D(p, 'warp', 6);
+    const buck = (await D(p, 'animals')).find((a) => a.role === 'buck' && a.onScreen);
+    await D(p, 'press', buck.x, buck.y);
+    await D(p, 'warp', 0.3);
+    ok('held press scopes without firing', (await D(p, 'shells')) === 3);
+    const s0 = await D(p, 'score');
+    const tgt = (await D(p, 'animals')).find((a) => a.role === 'buck' && a.onScreen);
+    const t = await p.evaluate(([x, y, vx]) => {
+      const t0 = window.__DH.flightTime(x, y);
+      window.__DH.release(x + vx * t0, y);
+      return t0;
+    }, [tgt.x, tgt.y, tgt.vx]);
+    await D(p, 'warp', t + 0.15);
+    ok('release fires the scoped shot', (await D(p, 'shells')) === 2);
+    ok('scoped kill pays the 1.25× gun bonus', (await D(p, 'score')) > s0, `score=${await D(p, 'score')}`);
+    // pause menu → END TREK bails to trek results
+    await D(p, 'click', 938, 156);
+    await D(p, 'warp', 0.1);
+    const frozen = await D(p, 'score');
+    await D(p, 'warp', 1.5);
+    ok('pause freezes the site', (await D(p, 'score')) === frozen && (await D(p, 'state')) === 'HUNTING');
+    await D(p, 'click', 480, 312);           // END TREK EARLY
+    ok('END TREK bails to trek results', (await D(p, 'state')) === 'TREK_RESULTS');
+    ok('no page errors in scope/pause test', p.errors.length === 0, p.errors.join(' | '));
+    await p.evaluate(() => window.DH.shop._reset());
     await p.close();
   }
 

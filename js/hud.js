@@ -111,6 +111,25 @@ DH.hud = (() => {
 
     // mute icon
     drawMute(ctx);
+    if (o.menu) drawMenu(ctx);
+  }
+
+  // pause/menu burger, stacked under the fullscreen brackets
+  function drawMenu(ctx) {
+    ctx.save();
+    ctx.globalAlpha = 0.8;
+    ctx.translate(DH.HUDR - 22, 156);
+    ctx.strokeStyle = '#e8f0e8';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    for (const dy of [-7, 0, 7]) {
+      ctx.beginPath(); ctx.moveTo(-9, dy); ctx.lineTo(9, dy); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function menuHit(x, y) {
+    return x > DH.HUDR - 44 && x < DH.HUDR + 8 && y > 138 && y < 176;
   }
 
   // big tap target, bottom-left (mobile has no right-click)
@@ -203,5 +222,5 @@ DH.hud = (() => {
   }
 
   return { draw, banner, update, drawCrosshair, crosshairKick, syncScore, label,
-           muteHit, drawMute, reloadHit, fsHit };
+           muteHit, drawMute, reloadHit, fsHit, menuHit };
 })();

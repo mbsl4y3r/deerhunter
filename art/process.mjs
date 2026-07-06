@@ -31,7 +31,10 @@ const LAYERS = [
     patch: { x: 908, y: 458, w: 55, h: 55, fromX: 848 } },
   // Elk Summit (env 'mountain')
   { name: 'mountain_sky',    file: 'mountain_sky.png',    key: false, q: 0.82,
-    patch: { x: 895, y: 445, w: 80, h: 75, fromX: 790 } },
+    cropY0: 380,   // the generated sky opens on ~380 rows of deep navy — crop
+                   // to the pale alpine band so the visible strip above the
+                   // far-layer haze matches it (patch y is post-crop)
+    patch: { x: 895, y: 65, w: 80, h: 75, fromX: 790 } },
   { name: 'mountain_far',    file: 'mountain_far.png',    key: true,  q: 0.82 },
   { name: 'mountain_mid',    file: 'mountain_mid.png',    key: true,  q: 0.85 },
   { name: 'mountain_ground', file: 'mountain_ground.png', key: false, q: 0.85,

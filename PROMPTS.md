@@ -321,6 +321,47 @@ rustic lettering. Slight warm highlight down one side. Solid flat magenta
 #FF00FF background, no text besides the XXX, no watermark, no shadow.
 ```
 
+## 4b · Marksman 98 scope kit (the unlockable scoped rifle is live in-game)
+
+**Scope lens + reticle overlay** *(replaces the procedural hairlines;
+transparent center is a must)*:
+
+```
+A single circular rifle scope reticle overlay, perfectly centered with wide
+empty magenta margins around it. Painterly arcade game style: a dark
+gunmetal scope ring with subtle worn edges and a thin brass inner ring,
+fine black crosshairs reaching the ring with small mil-dot tick marks along
+each hairline, and a tiny red center dot. THE ENTIRE AREA INSIDE THE RING
+IS SOLID FLAT MAGENTA #FF00FF (it becomes transparent glass), and
+everything outside the ring is also solid flat magenta #FF00FF. Only the
+ring and the hairline marks are drawn. No text, no watermark, no glass
+tint, no reflections.
+```
+
+**Marksman 98 shop icon:**
+
+```
+A single sprite, one object only, centered with wide empty magenta margins
+on all sides. A precision BOLT-ACTION HUNTING RIFLE with a large telescopic
+scope, in painterly arcade game style, STRICT side profile facing right:
+dark walnut stock with a raised cheek rest, long blued barrel, oversized
+scope with brass-ringed lenses mounted on top, bolt handle curved down.
+Sleek, expensive, the top-shelf gun in the shop. Solid flat magenta #FF00FF
+background, no text, no watermark, no shadow.
+```
+
+**Shot Report header ribbon** *(dresses the results screen)*:
+
+```
+A single horizontal wooden sign banner, centered with wide empty magenta
+margins on all sides. Rustic hunting-lodge style in painterly arcade game
+art: a carved wooden plank ribbon with forked ribbon ends on the left and
+right, rope-wrapped corners, warm mid-brown wood with lighter carved bevel
+edges. The face of the plank is EMPTY (text gets drawn by the game). Wide
+landscape proportions, about 5:1. Solid flat magenta #FF00FF background,
+no text, no watermark, no shadow.
+```
+
 ## 5 · Music prompts (send to a music generator — Lyria/MusicFX style)
 
 Files come back as audio; name them like the bold labels and I'll build the
@@ -470,9 +511,9 @@ banjo notes ending on a proud chord, under 2 seconds
 
 ## 7 · Down-the-road ideas (no prompts needed yet)
 
-- **Scope mode** (from BBH Marksman iOS): press-and-hold to raise the
-  scope — zoomed view, slowed time, drag to aim, release to fire. Would
-  slot in as a high-end shop gun ("MARKSMAN 98 — scoped").
+- ~~Scope mode~~ — SHIPPED: the MARKSMAN 98 in the shop ($120,000). Hold to
+  scope (zoom + slow time), drag to aim, release to fire. `?rich=1` in the
+  URL tops the wallet up to $5M for testing.
 - Pop-up shooting gallery backdrops (barn wall, campsite at night) for
   future bonus games: cockroach kitchen, pigeon park, electric eel.
 - Painted buck-tag icons for the HUD (the ?/✓/✗ chips), tiny antler set.

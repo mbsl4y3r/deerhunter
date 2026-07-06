@@ -482,6 +482,9 @@ DH.sprites = (() => {
       A.register(`critter_skunk_${f}`, { w: 52, h: 36, draw: (ctx) => skunkCritter(ctx, f === 1) });
     }
     A.register('raccoon_pop', { w: 56, h: 60, draw: raccoonPop });
+    // scoped-rifle lens + reticle (art-only override; procedural fallback
+    // draws its own hairlines in hunt.js)
+    A.register('scope_ring', { w: 360, h: 360, anchorY: 0.5, draw: () => {} });
     A.register('skunk_pop', { w: 56, h: 58, draw: skunkPop });
     A.register('bottle_jug', { w: 30, h: 50, anchorY: 0.5, draw: bottleJug });
   }

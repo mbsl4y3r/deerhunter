@@ -25,8 +25,15 @@ DH.input = (() => {
       DH.audio.unlock();
       const p = toLogical(e.clientX, e.clientY);
       mouse.x = p.x; mouse.y = p.y;
-      if (e.button === 2) DH.main.dispatch('rclick', p.x, p.y);
-      else DH.main.dispatch('click', p.x, p.y);
+      if (e.button === 2) { DH.main.dispatch('rclick', p.x, p.y); return; }
+      // states with an onPress handler (scoped hunting) take over the
+      // press/drag/release cycle; everyone else gets the classic click
+      if (!DH.main.dispatch('press', p.x, p.y)) DH.main.dispatch('click', p.x, p.y);
+    });
+    canvas.addEventListener('mouseup', (e) => {
+      const p = toLogical(e.clientX, e.clientY);
+      mouse.x = p.x; mouse.y = p.y;
+      if (e.button !== 2) DH.main.dispatch('release', p.x, p.y);
     });
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
@@ -37,13 +44,20 @@ DH.input = (() => {
       const t = e.changedTouches[0];
       const p = toLogical(t.clientX, t.clientY);
       mouse.x = p.x; mouse.y = p.y; mouse.inside = true;
-      DH.main.dispatch('click', p.x, p.y);
+      if (!DH.main.dispatch('press', p.x, p.y)) DH.main.dispatch('click', p.x, p.y);
     }, { passive: false });
     canvas.addEventListener('touchmove', (e) => {
       e.preventDefault();
       const t = e.changedTouches[0];
       const p = toLogical(t.clientX, t.clientY);
       mouse.x = p.x; mouse.y = p.y;
+    }, { passive: false });
+    canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      const t = e.changedTouches[0];
+      const p = toLogical(t.clientX, t.clientY);
+      mouse.x = p.x; mouse.y = p.y;
+      DH.main.dispatch('release', p.x, p.y);
     }, { passive: false });
 
     window.addEventListener('keydown', (e) => {
