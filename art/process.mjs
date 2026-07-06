@@ -70,10 +70,10 @@ for (let r = 0; r < 3; r++) {
 // take = which cells to keep; fit 'h' scales the sheet so the tallest frame
 // fills `fill` of the box height ('w' = widest frame, box width).
 const SHEETS = [
-  { file: 'deer_buck_walk_sheet.png', cells: 4, take: [0, 1, 2, 3],
+  { file: 'deer_buck_walk_sheet.png', anchor: 'torso', cells: 4, take: [0, 1, 2, 3],
     names: ['deer_buck_walk_0', 'deer_buck_walk_1', 'deer_buck_walk_2', 'deer_buck_walk_3'],
     box: { w: 176, h: 171 }, fill: 0.95, fit: 'h' },
-  { file: 'deer_buck_run_sheet.png', cells: 4, take: [1, 3],
+  { file: 'deer_buck_run_sheet.png', anchor: 'torso', cells: 4, take: [1, 3],
     names: ['deer_buck_run_0', 'deer_buck_run_1'],
     box: { w: 176, h: 171 }, fill: 0.95, fit: 'h' },
   { file: 'deer_buck_graze_sheet.png', cells: 1, take: [0],
@@ -97,10 +97,10 @@ const Q = [
 ];
 const MBOX = { w: 203, h: 202 };
 SHEETS.push(
-  { file: 'deer_monster_walk_sheet.png', boxes: Q,
+  { file: 'deer_monster_walk_sheet.png', anchor: 'torso', boxes: Q,
     names: ['deer_monster_walk_0', 'deer_monster_walk_1', 'deer_monster_walk_2', 'deer_monster_walk_3'],
     box: MBOX, fill: 0.95, fit: 'h', lineErase: false },
-  { file: 'deer_monster_run_sheet.png', boxes: [Q[1], Q[3]],   // gathered + stretched
+  { file: 'deer_monster_run_sheet.png', anchor: 'torso', boxes: [Q[1], Q[3]],   // gathered + stretched
     names: ['deer_monster_run_0', 'deer_monster_run_1'],
     box: MBOX, fill: 0.95, fit: 'h', lineErase: false },
   { file: 'deer_monster_graze_sheet.png', boxes: [{ x0: 0, x1: 1024, y0: 0, y1: 1024 }],
@@ -115,10 +115,10 @@ SHEETS.push(
 // fill factor — smaller fills keep her body height matched to the buck's.
 const DBOX = { w: 176, h: 171 };
 SHEETS.push(
-  { file: 'deer_doe_walk_sheet.png', boxes: Q,
+  { file: 'deer_doe_walk_sheet.png', anchor: 'torso', boxes: Q,
     names: ['deer_doe_walk_0', 'deer_doe_walk_1', 'deer_doe_walk_2', 'deer_doe_walk_3'],
     box: DBOX, fill: 0.62, fit: 'h', lineErase: false },
-  { file: 'deer_doe_run_sheet.png', boxes: [Q[1], Q[3]],
+  { file: 'deer_doe_run_sheet.png', anchor: 'torso', boxes: [Q[1], Q[3]],
     names: ['deer_doe_run_0', 'deer_doe_run_1'],
     box: DBOX, fill: 0.55, fit: 'h', lineErase: false },
   { file: 'deer_doe_graze_sheet.png', boxes: [{ x0: 0, x1: 1024, y0: 0, y1: 1024 }],
@@ -172,10 +172,10 @@ for (const id of ['pump12', 'lever30', 'win94', 'bolt700', 'auto5']) {
 // height matched to the bull's (his box height includes the rack).
 const EBOX = { w: 193, h: 183 };
 SHEETS.push(
-  { file: 'elk_bull_walk_sheet.png', boxes: Q6,
+  { file: 'elk_bull_walk_sheet.png', anchor: 'torso', boxes: Q6,
     names: ['elk_buck_walk_0', 'elk_buck_walk_1', 'elk_buck_walk_2', 'elk_buck_walk_3', 'elk_buck_walk_4', 'elk_buck_walk_5'],
     box: EBOX, fill: 0.95, fit: 'h', lineErase: false },
-  { file: 'elk_bull_run_sheet.png', boxes: Q6,
+  { file: 'elk_bull_run_sheet.png', anchor: 'torso', boxes: Q6,
     names: ['elk_buck_run_0', 'elk_buck_run_1', 'elk_buck_run_2', 'elk_buck_run_3', 'elk_buck_run_4', 'elk_buck_run_5'],
     box: EBOX, fill: 0.95, fit: 'h', lineErase: false },
   // the graze generation glitched into a 2x3 collage — the middle-right
@@ -187,10 +187,10 @@ SHEETS.push(
   { file: 'elk_bull_death_sheet.png', boxes: [Q6[0], Q6[3], Q6[4], Q6[5]],
     names: ['elk_buck_death_0', 'elk_buck_death_1', 'elk_buck_death_2', 'elk_buck_death_3'],
     box: EBOX, fill: 0.95, fit: 'h', lineErase: false },
-  { file: 'elk_cow_walk_sheet.png', boxes: Q6,
+  { file: 'elk_cow_walk_sheet.png', anchor: 'torso', boxes: Q6,
     names: ['elk_doe_walk_0', 'elk_doe_walk_1', 'elk_doe_walk_2', 'elk_doe_walk_3', 'elk_doe_walk_4', 'elk_doe_walk_5'],
     box: EBOX, fill: 0.6, fit: 'h', lineErase: false },
-  { file: 'elk_cow_run_sheet.png', boxes: Q6,
+  { file: 'elk_cow_run_sheet.png', anchor: 'torso', boxes: Q6,
     names: ['elk_doe_run_0', 'elk_doe_run_1', 'elk_doe_run_2', 'elk_doe_run_3', 'elk_doe_run_4', 'elk_doe_run_5'],
     box: EBOX, fill: 0.55, fit: 'h', lineErase: false },
   { file: 'elk_cow_graze.png', cells: 1, take: [0],
@@ -207,10 +207,10 @@ SHEETS.push(
 // moose's head in the last quadrant — desparkle inpaints it there only.
 const MOBOX = { w: 202, h: 185 };
 SHEETS.push(
-  { file: 'moose_bull_walk_sheet.png', boxes: Q6,
+  { file: 'moose_bull_walk_sheet.png', anchor: 'torso', boxes: Q6,
     names: ['moose_buck_walk_0', 'moose_buck_walk_1', 'moose_buck_walk_2', 'moose_buck_walk_3', 'moose_buck_walk_4', 'moose_buck_walk_5'],
     box: MOBOX, fill: 0.95, fit: 'h', lineErase: false },
-  { file: 'moose_bull_run_sheet.png', boxes: Q6,
+  { file: 'moose_bull_run_sheet.png', anchor: 'torso', boxes: Q6,
     names: ['moose_buck_run_0', 'moose_buck_run_1', 'moose_buck_run_2', 'moose_buck_run_3', 'moose_buck_run_4', 'moose_buck_run_5'],
     box: MOBOX, fill: 0.95, fit: 'h', lineErase: false },
   { file: 'moose_bull_graze.png', cells: 1, take: [0],
@@ -220,10 +220,10 @@ SHEETS.push(
     names: ['moose_buck_death_0', 'moose_buck_death_1', 'moose_buck_death_2', 'moose_buck_death_3'],
     box: MOBOX, fill: 0.95, fit: 'h', lineErase: false,
     desparkle: { 3: [350, 347, 424, 424] } },
-  { file: 'moose_cow_walk_sheet.png', boxes: Q6,
+  { file: 'moose_cow_walk_sheet.png', anchor: 'torso', boxes: Q6,
     names: ['moose_doe_walk_0', 'moose_doe_walk_1', 'moose_doe_walk_2', 'moose_doe_walk_3', 'moose_doe_walk_4', 'moose_doe_walk_5'],
     box: MOBOX, fill: 0.85, fit: 'h', lineErase: false },
-  { file: 'moose_cow_run_sheet.png', boxes: Q6,
+  { file: 'moose_cow_run_sheet.png', anchor: 'torso', boxes: Q6,
     names: ['moose_doe_run_0', 'moose_doe_run_1', 'moose_doe_run_2', 'moose_doe_run_3', 'moose_doe_run_4', 'moose_doe_run_5'],
     box: MOBOX, fill: 0.82, fit: 'h', lineErase: false },
   { file: 'moose_cow_graze.png', cells: 1, take: [0],
@@ -440,7 +440,17 @@ for (const S of SHEETS) {
           }
         }
       }
-      return { c, x0, x1, y0, y1 };
+      // upper-body centroid: the torso+head barely move across a stride, so
+      // anchoring on them keeps cycles rock-steady where the bbox center
+      // (which swings with every leg extension) makes them jitter
+      let tcx = 0, tn = 0;
+      const ty1 = Math.round(y0 + (y1 - y0) * 0.6);
+      for (let y = y0; y <= ty1; y++) {
+        for (let x = x0; x <= x1; x++) {
+          if (d[(y * cw + x) * 4 + 3] > 20) { tcx += x; tn++; }
+        }
+      }
+      return { c, x0, x1, y0, y1, tcx: tn ? tcx / tn : (x0 + x1) / 2 };
     });
 
     // one scale + one baseline for the whole sheet so frames don't pulse
@@ -463,7 +473,7 @@ for (const S of SHEETS) {
         og.drawImage(cell.c, 0, 0);
         return oc.toDataURL('image/webp', 0.9);
       }
-      const cx = (cell.x0 + cell.x1) / 2;
+      const cx = cfg.anchor === 'torso' ? cell.tcx : (cell.x0 + cell.x1) / 2;
       og.translate(cfg.box.w / 2 - cx * s, cfg.box.h - feetRow * s);
       og.scale(s, s);
       og.drawImage(cell.c, 0, 0);
