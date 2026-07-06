@@ -131,7 +131,7 @@ DH.entities = (() => {
 
     overrideFrames(gait, fallback) {
       let n = 0;
-      while (n < 6) {
+      while (n < 12) {
         const def = DH.assets.get(`${this.sp}_${this.skin}_${gait}_${n}`);
         if (!def || !def.img) break;
         n++;

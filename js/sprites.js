@@ -426,9 +426,9 @@ DH.sprites = (() => {
         const bw = role === 'monster' ? Math.round(w * 1.15) : w;
         const bh = role === 'monster' ? Math.round(h * 1.18) : h;
         const paintRole = role === 'monster' ? 'buck' : role;
-        // up to 6 frames per cycle (painted 2x3 sheets); procedural art
+        // up to 12 frames per cycle (video-sliced strides); procedural art
         // repeats its 4 walk / 2 run poses for the extra slots
-        for (let f = 0; f < 6; f++) {
+        for (let f = 0; f < 12; f++) {
           A.register(`${spKey}_${role}_walk_${f}`, {
             w: bw, h: bh, draw: (ctx, o) => quadruped(ctx, spKey, { role: paintRole, gait: 'walk', phase: (f % 4) / 4, trophy: o.trophy }),
           });

@@ -64,7 +64,7 @@ DH.data = (() => {
       antlerStyle: 'branched',
       // calibrated to the painted sprites (gx/gy = head position while grazing)
       hitboxes: [
-        { part: 'head',   cx: 40, cy: -114, rx: 22, ry: 20, gx: 58, gy: -34 },
+        { part: 'head',   cx: 46, cy: -119, rx: 22, ry: 20, gx: 58, gy: -34 },
         { part: 'vitals', cx: 18, cy: -84,  rx: 21, ry: 18 },
         { part: 'body',   cx: -8, cy: -82,  rx: 50, ry: 26 },
       ],
