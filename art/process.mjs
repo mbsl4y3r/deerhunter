@@ -70,11 +70,9 @@ for (let r = 0; r < 3; r++) {
 // take = which cells to keep; fit 'h' scales the sheet so the tallest frame
 // fills `fill` of the box height ('w' = widest frame, box width).
 const SHEETS = [
-  // 12-frame walk sliced from a Gemini video (one full stride, torso-anchored)
-  { file: 'deer_buck_walk12_sheet.png', anchor: 'torso', cells: 12,
-    take: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-    names: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => `deer_buck_walk_${i}`),
-    box: { w: 176, h: 171 }, fill: 0.95, fit: 'h', lineErase: false },
+  { file: 'deer_buck_walk_sheet.png', anchor: 'torso', cells: 4, take: [0, 1, 2, 3],
+    names: ['deer_buck_walk_0', 'deer_buck_walk_1', 'deer_buck_walk_2', 'deer_buck_walk_3'],
+    box: { w: 176, h: 171 }, fill: 0.95, fit: 'h' },
   { file: 'deer_buck_run_sheet.png', anchor: 'torso', cells: 4, take: [1, 3],
     names: ['deer_buck_run_0', 'deer_buck_run_1'],
     box: { w: 176, h: 171 }, fill: 0.95, fit: 'h' },
